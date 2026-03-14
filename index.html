@@ -1,886 +1,423 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NEXUS — Copy Intelligence System</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --cyan: #00d4ff;
-      --blue: #0055cc;
-      --orange: #ff6b00;
-      --green: #00ff88;
-      --bg: #020408;
-      --bg2: #050d18;
-      --bg3: #0a1628;
-      --text: #e0f0ff;
-      --muted: #4a7a9b;
-      --grid: rgba(0,212,255,0.035);
-      --glow: rgba(0,212,255,0.35);
-    }
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width:100%; height:100%; overflow:hidden; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Rajdhani', sans-serif;
-      cursor: none;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MATHEUS — Relational Intelligence Systems</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#03000A;--bg2:#060310;--acc:#809CAB;--acc2:#5B7A8C;--acc3:#B8D4E0;--text:#F0EEF8;--text2:#9B97B2;--border:rgba(128,156,171,.12);--border2:rgba(128,156,171,.22);--glass:rgba(128,156,171,.055);--green:#4ECDC4;--red:#FF6B6B}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;cursor:none}
 
-    /* ─── CURSOR ──────────────────────────────── */
-    #cur-ring {
-      position: fixed; width:24px; height:24px;
-      border: 1.5px solid var(--cyan); border-radius:50%;
-      pointer-events:none; z-index:9999;
-      transform: translate(-50%,-50%);
-      transition: width .2s, height .2s, border-color .2s;
-    }
-    #cur-dot {
-      position: fixed; width:4px; height:4px;
-      background: var(--cyan); border-radius:50%;
-      pointer-events:none; z-index:10000;
-      transform: translate(-50%,-50%);
-    }
-    #cur-aura {
-      position: fixed; width:300px; height:300px;
-      border-radius:50%; pointer-events:none; z-index:1;
-      background: radial-gradient(circle, rgba(0,212,255,.06) 0%, transparent 65%);
-      transform: translate(-50%,-50%);
-      transition: left .12s ease, top .12s ease;
-    }
-    body:has(a:hover) #cur-ring,
-    body:has(button:hover) #cur-ring,
-    body:has(.agent-card:hover) #cur-ring { width:40px; height:40px; border-color: var(--cyan); }
+/* CURSOR */
+#cr{position:fixed;width:22px;height:22px;border:1.5px solid var(--acc);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s}
+#cd{position:fixed;width:4px;height:4px;background:var(--acc);border-radius:50%;pointer-events:none;z-index:10000;transform:translate(-50%,-50%)}
+#ca{position:fixed;width:220px;height:220px;border-radius:50%;pointer-events:none;z-index:1;background:radial-gradient(circle,rgba(128,156,171,.05) 0%,transparent 65%);transform:translate(-50%,-50%);transition:left .1s,top .1s}
 
-    /* ─── CANVAS ──────────────────────────────── */
-    #bg-canvas { position:fixed; inset:0; z-index:0; }
+/* BG */
+#cv{position:fixed;inset:0;z-index:0}
+.grid{position:fixed;inset:0;z-index:1;pointer-events:none;background-image:linear-gradient(rgba(128,156,171,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(128,156,171,.025) 1px,transparent 1px);background-size:64px 64px}
+.scan{position:fixed;left:0;width:100%;height:1px;z-index:2;background:linear-gradient(90deg,transparent,rgba(128,156,171,.3),transparent);animation:scan 7s linear infinite}
+@keyframes scan{from{top:0}to{top:100vh}}
 
-    /* ─── GRID ────────────────────────────────── */
-    .grid {
-      position:fixed; inset:0; z-index:1; pointer-events:none;
-      background-image:
-        linear-gradient(var(--grid) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-      background-size: 64px 64px;
-    }
+/* HUD CORNERS */
+.hc{position:fixed;width:46px;height:46px;z-index:3;pointer-events:none;opacity:.4}
+.hc.tl{top:18px;left:18px;border-top:1px solid var(--acc);border-left:1px solid var(--acc)}
+.hc.tr{top:18px;right:18px;border-top:1px solid var(--acc);border-right:1px solid var(--acc)}
+.hc.bl{bottom:18px;left:18px;border-bottom:1px solid var(--acc);border-left:1px solid var(--acc)}
+.hc.br{bottom:18px;right:18px;border-bottom:1px solid var(--acc);border-right:1px solid var(--acc)}
 
-    /* ─── SCAN LINE ───────────────────────────── */
-    .scan {
-      position:fixed; left:0; width:100%; height:1px; z-index:2;
-      background: linear-gradient(90deg, transparent 0%, rgba(0,212,255,.4) 50%, transparent 100%);
-      animation: scan 5s linear infinite;
-    }
-    @keyframes scan { from { top:0 } to { top:100vh } }
+/* ORBITAL DECO */
+.orb{position:fixed;bottom:-110px;right:-110px;width:380px;height:380px;z-index:0;pointer-events:none}
+.orb .ring{position:absolute;border-radius:50%;border:1px solid var(--acc);top:50%;left:50%;transform:translate(-50%,-50%)}
+.orb .ring:nth-child(1){width:60px;height:60px;opacity:.05;animation:spin 8s linear infinite}
+.orb .ring:nth-child(2){width:110px;height:110px;opacity:.04;animation:spin 14s linear infinite reverse}
+.orb .ring:nth-child(3){width:175px;height:175px;opacity:.03;animation:spin 22s linear infinite}
+.orb .ring:nth-child(4){width:260px;height:260px;opacity:.025;animation:spin 33s linear infinite reverse}
+.orb .ring:nth-child(5){width:380px;height:380px;opacity:.018;animation:spin 48s linear infinite}
+.orb .core{position:absolute;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,rgba(128,156,171,.5),transparent);top:50%;left:50%;transform:translate(-50%,-50%)}
+@keyframes spin{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
 
-    /* ─── HUD CORNERS ─────────────────────────── */
-    .hc { position:fixed; width:52px; height:52px; z-index:3; pointer-events:none; opacity:.55; }
-    .hc.tl { top:18px; left:18px; border-top:1.5px solid var(--cyan); border-left:1.5px solid var(--cyan); }
-    .hc.tr { top:18px; right:18px; border-top:1.5px solid var(--cyan); border-right:1.5px solid var(--cyan); }
-    .hc.bl { bottom:18px; left:18px; border-bottom:1.5px solid var(--cyan); border-left:1.5px solid var(--cyan); }
-    .hc.br { bottom:18px; right:18px; border-bottom:1.5px solid var(--cyan); border-right:1.5px solid var(--cyan); }
+/* HEADER */
+header{position:fixed;top:0;left:0;right:0;z-index:20;padding:15px 44px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(3,0,10,.85);backdrop-filter:blur(20px)}
+.lname{font-family:'DM Serif Display',serif;font-size:21px;letter-spacing:7px;color:var(--text);line-height:1}
+.ltag{font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:3.5px;color:var(--text2);margin-top:3px}
+.hdr-r{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;text-align:right;line-height:1.9}
+.hlive{color:var(--green)}
 
-    /* ─── ARC REACTOR (deco) ──────────────────── */
-    .arc {
-      position:fixed; bottom:-80px; right:-80px;
-      width:260px; height:260px; z-index:0; pointer-events:none; opacity:.055;
-    }
-    .arc .ring {
-      position:absolute; border-radius:50%; border:1px solid var(--cyan);
-      top:50%; left:50%; transform:translate(-50%,-50%);
-    }
-    .arc .r1 { width:50px;  height:50px;  animation: spin 3s linear infinite; }
-    .arc .r2 { width:90px;  height:90px;  animation: spin 6s linear infinite reverse; }
-    .arc .r3 { width:140px; height:140px; animation: spin 11s linear infinite; }
-    .arc .r4 { width:200px; height:200px; animation: spin 18s linear infinite reverse; }
-    .arc .r5 { width:260px; height:260px; animation: spin 25s linear infinite; }
-    .arc .core {
-      position:absolute; width:18px; height:18px; border-radius:50%;
-      background: radial-gradient(circle, var(--cyan), transparent);
-      top:50%; left:50%; transform:translate(-50%,-50%);
-    }
-    @keyframes spin { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+/* DATA STRIP */
+.dsw{position:fixed;top:78px;right:36px;z-index:15;display:flex;flex-direction:column;gap:4px;pointer-events:none}
+.ds{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);opacity:.28;letter-spacing:2px;text-align:right}
 
-    /* ─── HEADER ──────────────────────────────── */
-    header {
-      position:fixed; top:0; left:0; right:0; z-index:20;
-      padding:18px 44px;
-      display:flex; align-items:center; justify-content:space-between;
-      border-bottom:1px solid rgba(0,212,255,.08);
-      background: rgba(2,4,8,.75); backdrop-filter:blur(20px);
-    }
-    .logo {
-      font-family:'Orbitron',sans-serif; font-size:20px; font-weight:900;
-      letter-spacing:7px; color:var(--cyan);
-      text-shadow: 0 0 18px rgba(0,212,255,.5);
-    }
-    .logo sub {
-      display:block; font-size:9px; letter-spacing:4px;
-      color:var(--muted); font-weight:400; margin-top:1px;
-    }
-    .hud-info {
-      font-family:'Share Tech Mono',monospace; font-size:10px;
-      color:var(--muted); letter-spacing:2px; text-align:right;
-      line-height:1.8;
-    }
-    .hud-info .live { color:var(--green); }
+/* STATUS BAR */
+.sbar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:30px;align-items:center;pointer-events:none}
+.sbi{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;display:flex;align-items:center;gap:7px}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--acc);animation:breathe 2.2s ease-in-out infinite}
+.sdot.g{background:var(--green)}
+@keyframes breathe{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.65)}}
 
-    /* ─── STATUS BAR ──────────────────────────── */
-    .statusbar {
-      position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
-      z-index:20; display:flex; gap:36px; align-items:center;
-      pointer-events:none;
-    }
-    .sb-item {
-      font-family:'Share Tech Mono',monospace; font-size:9px;
-      color:var(--muted); letter-spacing:2px;
-      display:flex; align-items:center; gap:7px;
-    }
-    .sb-dot {
-      width:5px; height:5px; border-radius:50%; background:var(--cyan);
-      animation: pls 2.2s ease-in-out infinite;
-    }
-    .sb-dot.green { background:var(--green); }
-    @keyframes pls { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.7)} }
+/* SCREEN 1 */
+#s1{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:110px 40px 88px;transition:opacity .5s ease,transform .5s ease}
+#s1.out{opacity:0;transform:scale(.97);pointer-events:none}
+.eyebrow{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:5px;color:var(--text2);text-align:center;margin-bottom:12px}
+.sel-h1{font-family:'DM Serif Display',serif;font-size:clamp(28px,4vw,50px);color:var(--text);text-align:center;letter-spacing:2px;margin-bottom:8px}
+.sel-sub{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--acc);opacity:.6;text-align:center;margin-bottom:48px}
+.rule{width:150px;height:1px;margin:14px auto 44px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:940px;width:100%}
+@media(max-width:768px){.g3{grid-template-columns:1fr}}
 
-    /* ─── DATA STRIP ──────────────────────────── */
-    .datastrip {
-      position:fixed; top:88px; right:40px; z-index:15;
-      display:flex; flex-direction:column; gap:5px; pointer-events:none;
-    }
-    .ds { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--muted); opacity:.32; letter-spacing:2px; text-align:right; }
+/* LOCKED CARDS */
+.card-lock{position:relative;background:rgba(6,3,16,.5);border:1px dashed rgba(128,156,171,.1);border-radius:4px;padding:34px 26px;pointer-events:none;filter:saturate(.4);display:flex;flex-direction:column;align-items:flex-start}
+.lock-icon{font-size:26px;margin-bottom:14px;opacity:.25}
+.lock-name{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text2);margin-bottom:4px;opacity:.5}
+.lock-sub{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text2);opacity:.25}
+.lock-badge-w{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.lock-badge{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:4px;color:var(--text2);border:1px solid rgba(128,156,171,.18);padding:6px 14px;border-radius:2px;background:rgba(3,0,10,.7);white-space:nowrap}
 
-    /* ═══════════════════════════════════════════ */
-    /* SCREEN — AGENT SELECTION                   */
-    /* ═══════════════════════════════════════════ */
-    #screen-select {
-      position:relative; z-index:10;
-      display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      min-height:100vh; padding:120px 40px 90px;
-      transition: opacity .45s ease, transform .45s ease;
-    }
-    #screen-select.leaving { opacity:0; transform:scale(.96); pointer-events:none; }
+/* COPY-FORGE HERO CARD */
+#cf-card{position:relative;background:rgba(3,0,10,.95);border:1px solid rgba(128,156,171,.14);border-radius:4px;padding:34px 26px;cursor:pointer;overflow:hidden;transition:box-shadow .8s ease,border-color .8s ease}
+.cf-rings{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.cf-ring{position:absolute;border-radius:50%;border:1px solid var(--acc);top:50%;left:50%;transform:translate(-50%,-50%);animation:spin var(--d,80s) linear infinite paused;transition:opacity 1s ease}
+.cf-ring:nth-child(1){width:70px;height:70px;--d:80s;opacity:.05}
+.cf-ring:nth-child(2){width:130px;height:130px;--d:120s;animation-direction:reverse;opacity:.04}
+.cf-ring:nth-child(3){width:210px;height:210px;--d:60s;opacity:.035}
+.cf-ring:nth-child(4){width:320px;height:320px;--d:45s;animation-direction:reverse;opacity:.03}
+.cf-ring:nth-child(5){width:480px;height:480px;--d:35s;opacity:.025}
+.cf-gline{position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent);opacity:0;transition:opacity .8s ease}
 
-    .sel-title { text-align:center; margin-bottom:56px; }
-    .sel-eyebrow {
-      font-family:'Share Tech Mono',monospace; font-size:11px;
-      letter-spacing:5px; color:var(--muted); margin-bottom:14px;
-    }
-    .sel-h1 {
-      font-family:'Orbitron',monospace; font-size:clamp(26px,4vw,46px);
-      font-weight:800; letter-spacing:6px; color:var(--text); margin-bottom:14px;
-    }
-    .sel-h1 em { color:var(--cyan); font-style:normal; text-shadow:0 0 28px rgba(0,212,255,.45); }
-    .sel-rule {
-      width:180px; height:1px; margin:0 auto;
-      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-    }
+#cf-card.wake .cf-ring{animation-play-state:running}
+#cf-card.wake .cf-ring:nth-child(1){opacity:.28;animation-duration:12s}
+#cf-card.wake .cf-ring:nth-child(2){opacity:.2;animation-duration:20s}
+#cf-card.wake .cf-ring:nth-child(3){opacity:.14;animation-duration:32s}
+#cf-card.wake .cf-ring:nth-child(4){opacity:.1;animation-duration:50s}
+#cf-card.wake .cf-ring:nth-child(5){opacity:.07;animation-duration:70s}
+#cf-card.wake .cf-gline{opacity:.75}
+#cf-card.wake{border-color:rgba(128,156,171,.45);box-shadow:0 0 40px rgba(128,156,171,.1),inset 0 0 40px rgba(128,156,171,.03)}
 
-    /* Cards */
-    .cards-grid {
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-      gap:22px; max-width:980px; width:100%;
-    }
+#cf-card.blaze .cf-ring:nth-child(1){opacity:.6!important;animation-duration:.9s!important}
+#cf-card.blaze .cf-ring:nth-child(2){opacity:.48!important;animation-duration:1.6s!important}
+#cf-card.blaze .cf-ring:nth-child(3){opacity:.36!important;animation-duration:2.8s!important}
+#cf-card.blaze .cf-ring:nth-child(4){opacity:.26!important;animation-duration:4.5s!important}
+#cf-card.blaze .cf-ring:nth-child(5){opacity:.18!important;animation-duration:7s!important}
+#cf-card.blaze .cf-gline{opacity:1}
+#cf-card.blaze{border-color:rgba(128,156,171,.9)!important;box-shadow:0 0 90px rgba(128,156,171,.24),0 0 180px rgba(128,156,171,.09),inset 0 0 60px rgba(128,156,171,.07)!important}
 
-    .acard {
-      position:relative;
-      background: rgba(8,18,34,.65);
-      border:1px solid rgba(0,212,255,.13);
-      border-radius:3px; padding:30px;
-      cursor:pointer; overflow:hidden;
-      backdrop-filter:blur(14px);
-      transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
-    }
-    .acard::before { /* sweep shimmer */
-      content:''; position:absolute; inset:0;
-      background: linear-gradient(120deg, transparent 35%, rgba(0,212,255,.04) 50%, transparent 65%);
-      transform:translateX(-100%); transition:transform .55s ease;
-    }
-    .acard:hover::before { transform:translateX(100%); }
-    .acard::after { /* top glow line */
-      content:''; position:absolute; top:0; left:0; right:0; height:1px;
-      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-      opacity:0; transition:opacity .3s ease;
-    }
-    .acard:hover::after { opacity:1; }
-    .acard:hover {
-      border-color: rgba(0,212,255,.45);
-      transform: translateY(-5px) perspective(700px) rotateX(0deg);
-      box-shadow: 0 24px 60px rgba(0,212,255,.08), 0 0 0 1px rgba(0,212,255,.04);
-    }
+.cf-inner{position:relative;z-index:2}
+.cf-status{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;display:flex;align-items:center;gap:8px;margin-bottom:20px}
+.cf-sdot{width:6px;height:6px;border-radius:50%;background:rgba(128,156,171,.2);transition:background .8s ease,box-shadow .8s ease}
+.cf-stxt{color:var(--text2);opacity:.4;transition:color .8s ease,opacity .8s ease}
+#cf-card.wake .cf-sdot{background:var(--green);box-shadow:0 0 8px var(--green);animation:breathe 1.5s ease-in-out infinite}
+#cf-card.wake .cf-stxt{color:var(--green);opacity:1}
+.cf-idx{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--text2);opacity:.38;margin-bottom:14px}
+.cf-name{font-family:'DM Serif Display',serif;font-size:clamp(22px,2.5vw,30px);letter-spacing:2px;color:var(--text);margin-bottom:5px;transition:color .5s,text-shadow .5s}
+#cf-card.wake .cf-name{color:var(--acc3);text-shadow:0 0 30px rgba(128,156,171,.25)}
+.cf-role{font-family:'Share Tech Mono',monospace;font-size:9.5px;letter-spacing:2px;color:var(--acc);opacity:.6;margin-bottom:16px}
+.cf-desc{font-size:13.5px;color:var(--text2);line-height:1.68;margin-bottom:22px}
+.cf-agents{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:24px}
+.cf-ab{width:28px;height:28px;border-radius:50%;border:1px solid rgba(128,156,171,.18);background:rgba(128,156,171,.04);display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.45;transition:all .5s ease}
+#cf-card.wake .cf-ab{opacity:1;border-color:rgba(128,156,171,.38);box-shadow:0 0 8px rgba(128,156,171,.08)}
+.cf-btn{font-family:'DM Sans',sans-serif;font-weight:600;font-size:12px;letter-spacing:1.8px;color:var(--bg);background:var(--acc);border:none;padding:11px 22px;border-radius:500px;cursor:pointer;opacity:0;transform:translateY(8px);transition:opacity .5s ease,transform .5s ease,background .25s ease,box-shadow .25s ease;width:fit-content}
+#cf-card.wake .cf-btn{opacity:1;transform:translateY(0)}
+.cf-btn:hover{background:var(--acc3);box-shadow:0 -18px 50px rgba(128,156,171,.22),0 -6px 18px rgba(128,156,171,.15)}
 
-    /* card bracket corners */
-    .cc { position:absolute; width:11px; height:11px; }
-    .cc.tl { top:9px;  left:9px;  border-top:1px solid rgba(0,212,255,.5); border-left:1px solid rgba(0,212,255,.5); }
-    .cc.tr { top:9px;  right:9px; border-top:1px solid rgba(0,212,255,.5); border-right:1px solid rgba(0,212,255,.5); }
-    .cc.bl { bottom:9px; left:9px;  border-bottom:1px solid rgba(0,212,255,.5); border-left:1px solid rgba(0,212,255,.5); }
-    .cc.br { bottom:9px; right:9px; border-bottom:1px solid rgba(0,212,255,.5); border-right:1px solid rgba(0,212,255,.5); }
+/* BOOT OVERLAY */
+#boot-ov{position:fixed;inset:0;z-index:200;background:var(--bg);opacity:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .35s ease}
+#boot-ov.on{opacity:1;pointer-events:all}
+#boot-ov.flash{background:rgba(185,212,224,.9)}
+.bl{font-family:'DM Serif Display',serif;font-size:38px;letter-spacing:8px;color:var(--text);opacity:0;transform:scale(.94);transition:opacity .55s ease,transform .55s ease;text-align:center;margin-bottom:6px}
+.bt{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--acc);opacity:0;transition:opacity .55s ease .15s;text-align:center;margin-bottom:44px}
+.blist{display:flex;flex-direction:column;gap:5px;opacity:0;transition:opacity .3s ease}
+.ba{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--green);opacity:0;transition:opacity .18s ease}
+.ba.on{opacity:1}
+.bprog{width:220px;height:1px;background:rgba(128,156,171,.1);margin-top:26px;border-radius:1px;overflow:hidden;opacity:0;transition:opacity .3s ease}
+.bbar{height:100%;background:var(--acc);width:0%;transition:width .04s linear}
+.bgreet{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:4px;color:var(--acc3);text-align:center;opacity:0;margin-top:22px;transition:opacity .5s ease}
 
-    .card-idx {
-      font-family:'Share Tech Mono',monospace; font-size:9px;
-      letter-spacing:3px; color:var(--cyan); opacity:.5; margin-bottom:18px;
-    }
-    .card-ava {
-      width:54px; height:54px; border-radius:50%;
-      border:1.5px solid rgba(0,212,255,.28);
-      background: rgba(0,212,255,.04);
-      display:flex; align-items:center; justify-content:center;
-      font-size:22px; margin-bottom:18px; position:relative;
-    }
-    .card-ava::after {
-      content:''; position:absolute; inset:-5px; border-radius:50%;
-      border:1px solid rgba(0,212,255,.09);
-    }
-    .card-name {
-      font-family:'Orbitron',sans-serif; font-size:15px; font-weight:700;
-      letter-spacing:3px; margin-bottom:6px;
-    }
-    .card-role {
-      font-family:'Share Tech Mono',monospace; font-size:10px;
-      color:var(--cyan); letter-spacing:2px; opacity:.75; margin-bottom:15px;
-    }
-    .card-desc { font-size:13.5px; color:var(--muted); line-height:1.65; font-weight:400; }
-    .card-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:18px; }
-    .ctag {
-      font-family:'Share Tech Mono',monospace; font-size:8.5px;
-      letter-spacing:1.5px; color:var(--cyan);
-      border:1px solid rgba(0,212,255,.18); padding:3px 9px;
-      border-radius:2px; opacity:.65;
-    }
-    .card-cta {
-      display:flex; align-items:center; gap:7px; margin-top:22px;
-      font-family:'Share Tech Mono',monospace; font-size:10px;
-      color:var(--cyan); letter-spacing:3px;
-      opacity:0; transform:translateX(-8px);
-      transition:opacity .3s ease, transform .3s ease;
-    }
-    .acard:hover .card-cta { opacity:1; transform:translateX(0); }
-    .card-cta::after { content:'→'; }
+/* SCREEN 2 */
+#s2{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .5s ease}
+#s2.on{opacity:1;pointer-events:all}
+.chdr{display:flex;align-items:center;gap:14px;padding:12px 40px;background:rgba(3,0,10,.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);z-index:20;position:relative}
+.bbk{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;cursor:pointer;padding:6px 12px;border:1px solid transparent;border-radius:2px;transition:all .2s ease;flex-shrink:0}
+.bbk:hover{color:var(--acc);border-color:var(--border2)}
+.sqb{display:flex;align-items:center;gap:12px;flex:1}
+.sqav{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(128,156,171,.32);background:rgba(128,156,171,.04);display:flex;align-items:center;justify-content:center;font-size:15px;position:relative;flex-shrink:0}
+.sqav .ld{position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--green);border:1.5px solid var(--bg);animation:breathe 2s ease-in-out infinite}
+.sqn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;letter-spacing:.8px}
+.sqs{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--green);letter-spacing:2px;margin-top:1px}
+.rost{display:flex;gap:4px;margin-left:auto;align-items:center}
+.ra{width:26px;height:26px;border-radius:50%;border:1px solid rgba(128,156,171,.18);background:rgba(128,156,171,.04);display:flex;align-items:center;justify-content:center;font-size:11px;position:relative;transition:all .2s ease}
+.ra.act{border-color:var(--acc);box-shadow:0 0 10px rgba(128,156,171,.2);transform:scale(1.12)}
+.ra:hover::after{content:attr(data-n);position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:rgba(3,0,10,.95);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;padding:3px 7px;border-radius:2px;white-space:nowrap;border:1px solid var(--border);pointer-events:none;z-index:10}
+.hm{text-align:right;margin-left:14px;flex-shrink:0}
+.hmv{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--acc)}
+.hml{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text2);letter-spacing:2px}
 
-    /* ═══════════════════════════════════════════ */
-    /* SCREEN — CHAT                              */
-    /* ═══════════════════════════════════════════ */
-    #screen-chat {
-      position:fixed; inset:0; z-index:10;
-      display:flex; flex-direction:column;
-      opacity:0; pointer-events:none;
-      transition:opacity .45s ease;
-    }
-    #screen-chat.active { opacity:1; pointer-events:all; }
+/* MESSAGES */
+.msgs{flex:1;overflow-y:auto;padding:32px 40px;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth}
+.msgs::-webkit-scrollbar{width:2px}
+.msgs::-webkit-scrollbar-thumb{background:rgba(128,156,171,.18)}
+.wel{display:flex;flex-direction:column;align-items:center;text-align:center;padding:52px 20px}
+.wico{width:76px;height:76px;border-radius:50%;border:1.5px solid rgba(128,156,171,.28);background:rgba(128,156,171,.04);display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:20px;box-shadow:0 0 40px rgba(128,156,171,.08);animation:float 4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.wt{font-family:'DM Serif Display',serif;font-size:22px;letter-spacing:3px;margin-bottom:10px}
+.wd{font-size:14px;color:var(--text2);line-height:1.7;max-width:500px;margin-bottom:28px}
+.qas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.qa{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--acc);border:1px solid var(--border2);padding:8px 16px;border-radius:500px;cursor:pointer;background:var(--glass);transition:all .2s ease}
+.qa:hover{background:rgba(128,156,171,.1);border-color:var(--acc);box-shadow:0 0 14px rgba(128,156,171,.07)}
+.msg{display:flex;gap:12px;max-width:860px;animation:mi .3s ease forwards}
+@keyframes mi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.u{margin-left:auto;flex-direction:row-reverse}
+.mav{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid var(--border);background:rgba(128,156,171,.04)}
+.mbd{flex:1}
+.mmt{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.msg.u .mmt{flex-direction:row-reverse}
+.mw{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--acc)}
+.msg.u .mw{color:var(--text2)}
+.mtm{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text2);opacity:.35}
+.mb{background:rgba(8,5,20,.85);border:1px solid var(--border);border-radius:2px 12px 12px 12px;padding:14px 18px;font-size:14px;line-height:1.74;color:var(--text);position:relative;backdrop-filter:blur(8px)}
+.mb::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--acc),transparent);opacity:.2;border-radius:2px}
+.msg.u .mb{background:rgba(5,3,14,.8);border-color:rgba(128,156,171,.08);border-radius:12px 2px 12px 12px}
+.msg.u .mb::before{display:none}
+.typ{display:flex;gap:12px;align-items:flex-start}
+.tds{padding:14px 18px;background:rgba(8,5,20,.85);border:1px solid var(--border);border-radius:2px 12px 12px 12px;display:flex;gap:5px;align-items:center}
+.td{width:5px;height:5px;border-radius:50%;background:var(--acc);animation:tb 1.4s ease-in-out infinite}
+.td:nth-child(2){animation-delay:.2s}
+.td:nth-child(3){animation-delay:.4s}
+@keyframes tb{0%,60%,100%{transform:translateY(0);opacity:.3}30%{transform:translateY(-6px);opacity:1}}
 
-    /* Chat Header */
-    .chat-hdr {
-      display:flex; align-items:center; gap:18px;
-      padding:14px 40px;
-      background:rgba(2,4,8,.85); backdrop-filter:blur(24px);
-      border-bottom:1px solid rgba(0,212,255,.09);
-      position:relative; z-index:20;
-    }
-    .back-btn {
-      font-family:'Share Tech Mono',monospace; font-size:10px;
-      color:var(--muted); letter-spacing:2px; cursor:pointer;
-      padding:7px 12px; border:1px solid transparent;
-      transition:all .2s ease; border-radius:2px;
-    }
-    .back-btn:hover { color:var(--cyan); border-color:rgba(0,212,255,.22); }
-
-    .ag-badge {
-      display:flex; align-items:center; gap:14px; flex:1;
-    }
-    .ag-ava {
-      width:38px; height:38px; border-radius:50%;
-      border:1.5px solid rgba(0,212,255,.35);
-      background:rgba(0,212,255,.04);
-      display:flex; align-items:center; justify-content:center;
-      font-size:17px; position:relative; flex-shrink:0;
-    }
-    .ag-ava .sdot {
-      position:absolute; bottom:0; right:0; width:9px; height:9px;
-      border-radius:50%; background:var(--green); border:1.5px solid var(--bg);
-      animation:pls 2s ease-in-out infinite;
-    }
-    .ag-name { font-family:'Orbitron',sans-serif; font-size:12px; font-weight:700; letter-spacing:2.5px; }
-    .ag-status { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--green); letter-spacing:2px; margin-top:1px; }
-
-    .chat-metrics { display:flex; gap:28px; margin-left:auto; }
-    .cm { text-align:right; }
-    .cm-val { font-family:'Share Tech Mono',monospace; font-size:15px; color:var(--cyan); }
-    .cm-lbl { font-family:'Share Tech Mono',monospace; font-size:8.5px; color:var(--muted); letter-spacing:2px; }
-
-    /* Messages */
-    .msgs {
-      flex:1; overflow-y:auto; padding:36px 40px;
-      display:flex; flex-direction:column; gap:22px;
-      scroll-behavior:smooth;
-    }
-    .msgs::-webkit-scrollbar { width:3px; }
-    .msgs::-webkit-scrollbar-thumb { background:rgba(0,212,255,.18); border-radius:2px; }
-
-    /* Welcome block */
-    .welcome {
-      display:flex; flex-direction:column; align-items:center;
-      text-align:center; padding:60px 20px;
-    }
-    .w-ava {
-      width:76px; height:76px; border-radius:50%;
-      border:2px solid rgba(0,212,255,.28);
-      background:rgba(0,212,255,.04);
-      display:flex; align-items:center; justify-content:center;
-      font-size:32px; margin-bottom:22px;
-      box-shadow:0 0 40px rgba(0,212,255,.1);
-      animation:float 4s ease-in-out infinite;
-    }
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-    .w-title {
-      font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700;
-      letter-spacing:4px; margin-bottom:10px;
-    }
-    .w-desc { font-size:13.5px; color:var(--muted); line-height:1.7; max-width:480px; margin-bottom:28px; }
-    .qactions { display:flex; flex-wrap:wrap; gap:9px; justify-content:center; }
-    .qa-btn {
-      font-family:'Share Tech Mono',monospace; font-size:10.5px;
-      color:var(--cyan); border:1px solid rgba(0,212,255,.22);
-      padding:8px 16px; border-radius:2px; cursor:pointer;
-      letter-spacing:1px; background:rgba(0,212,255,.03);
-      transition:all .2s ease;
-    }
-    .qa-btn:hover {
-      background:rgba(0,212,255,.09); border-color:rgba(0,212,255,.5);
-      box-shadow:0 0 18px rgba(0,212,255,.1);
-    }
-
-    /* Message bubble */
-    .msg {
-      display:flex; gap:14px; max-width:820px;
-      animation:msgIn .3s ease forwards;
-    }
-    @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-    .msg.user { margin-left:auto; flex-direction:row-reverse; }
-
-    .m-ava {
-      width:34px; height:34px; border-radius:50%; flex-shrink:0;
-      display:flex; align-items:center; justify-content:center; font-size:15px;
-      border:1px solid rgba(0,212,255,.18); background:rgba(0,212,255,.04);
-    }
-    .msg.user .m-ava { border-color:rgba(255,107,0,.25); background:rgba(255,107,0,.04); }
-
-    .m-body { flex:1; }
-    .m-meta { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
-    .msg.user .m-meta { flex-direction:row-reverse; }
-    .m-who { font-family:'Share Tech Mono',monospace; font-size:9.5px; letter-spacing:2px; color:var(--cyan); }
-    .msg.user .m-who { color: var(--orange); }
-    .m-time { font-family:'Share Tech Mono',monospace; font-size:8.5px; color:var(--muted); opacity:.45; letter-spacing:1px; }
-
-    .m-bubble {
-      background:rgba(8,18,34,.85); border:1px solid rgba(0,212,255,.1);
-      border-radius:3px 14px 14px 14px; padding:14px 18px;
-      font-size:14px; color:var(--text); line-height:1.72; font-weight:400;
-      position:relative; backdrop-filter:blur(8px);
-    }
-    .msg.user .m-bubble {
-      background:rgba(255,107,0,.055); border-color:rgba(255,107,0,.14);
-      border-radius:14px 3px 14px 14px;
-    }
-    .m-bubble::before {
-      content:''; position:absolute; top:0; left:0; right:0; height:1px; border-radius:3px;
-      background:linear-gradient(90deg, var(--cyan), transparent); opacity:.25;
-    }
-    .msg.user .m-bubble::before { background:linear-gradient(90deg, var(--orange), transparent); opacity:.2; }
-
-    /* Typing */
-    .typing { display:flex; gap:14px; align-items:flex-start; }
-    .tdots {
-      display:flex; gap:5px; align-items:center;
-      padding:14px 18px; background:rgba(8,18,34,.85);
-      border:1px solid rgba(0,212,255,.1);
-      border-radius:3px 14px 14px 14px;
-    }
-    .td {
-      width:6px; height:6px; border-radius:50%; background:var(--cyan);
-      animation:tb 1.4s ease-in-out infinite;
-    }
-    .td:nth-child(2){animation-delay:.2s} .td:nth-child(3){animation-delay:.4s}
-    @keyframes tb { 0%,60%,100%{transform:translateY(0);opacity:.35} 30%{transform:translateY(-7px);opacity:1} }
-
-    /* Input */
-    .input-zone {
-      padding:20px 40px 24px;
-      background:rgba(2,4,8,.9); backdrop-filter:blur(20px);
-      border-top:1px solid rgba(0,212,255,.07);
-    }
-    .iw {
-      display:flex; align-items:flex-end; gap:14px;
-      background:rgba(8,18,34,.85); border:1px solid rgba(0,212,255,.14);
-      border-radius:5px; padding:14px 18px;
-      transition: border-color .3s, box-shadow .3s;
-      position:relative;
-    }
-    .iw::before {
-      content:''; position:absolute; top:0; left:24px; right:24px; height:1px;
-      background:linear-gradient(90deg, transparent, rgba(0,212,255,.28), transparent);
-    }
-    .iw:focus-within {
-      border-color:rgba(0,212,255,.38);
-      box-shadow:0 0 28px rgba(0,212,255,.07), inset 0 0 28px rgba(0,212,255,.015);
-    }
-    #chat-input {
-      flex:1; background:transparent; border:none; outline:none;
-      color:var(--text); font-family:'Rajdhani',sans-serif;
-      font-size:15px; font-weight:400; line-height:1.6;
-      resize:none; min-height:24px; max-height:130px;
-      letter-spacing:.3px;
-    }
-    #chat-input::placeholder { color:var(--muted); opacity:.38; }
-    .send-btn {
-      width:38px; height:38px; border:1px solid rgba(0,212,255,.28);
-      border-radius:3px; background:rgba(0,212,255,.04); color:var(--cyan);
-      cursor:pointer; display:flex; align-items:center; justify-content:center;
-      transition:all .2s ease; flex-shrink:0;
-    }
-    .send-btn:hover { background:rgba(0,212,255,.14); border-color:var(--cyan); box-shadow:0 0 18px rgba(0,212,255,.18); }
-    .send-btn svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:2; }
-    .ihint { display:flex; justify-content:space-between; margin-top:9px; padding:0 3px; }
-    .ihint span { font-family:'Share Tech Mono',monospace; font-size:8.5px; color:var(--muted); opacity:.35; letter-spacing:1px; }
-
-    /* ─── RESPONSIVE ──────────────────────────── */
-    @media(max-width:768px){
-      .cards-grid{grid-template-columns:1fr}
-      .chat-hdr{padding:12px 18px} .msgs{padding:20px 18px}
-      .input-zone{padding:14px 18px 18px} .chat-metrics{display:none}
-      header{padding:14px 20px}
-    }
-  </style>
+/* INPUT */
+.inz{padding:16px 40px 20px;background:rgba(3,0,10,.96);backdrop-filter:blur(20px);border-top:1px solid var(--border)}
+.iw{display:flex;align-items:flex-end;gap:12px;background:rgba(8,5,20,.9);border:1px solid var(--border2);border-radius:6px;padding:12px 16px;transition:border-color .3s,box-shadow .3s;position:relative}
+.iw::before{content:'';position:absolute;top:0;left:20px;right:20px;height:1px;background:linear-gradient(90deg,transparent,rgba(128,156,171,.22),transparent)}
+.iw:focus-within{border-color:rgba(128,156,171,.4);box-shadow:0 0 22px rgba(128,156,171,.06),inset 0 0 22px rgba(128,156,171,.015)}
+#ci{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:400;line-height:1.6;resize:none;min-height:24px;max-height:120px}
+#ci::placeholder{color:var(--text2);opacity:.38}
+.sb{width:36px;height:36px;border:1px solid rgba(128,156,171,.26);border-radius:500px;background:rgba(128,156,171,.05);color:var(--acc);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s ease;flex-shrink:0}
+.sb:hover{background:var(--acc);color:var(--bg);box-shadow:0 -14px 38px rgba(128,156,171,.2)}
+.sb svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+.ih{display:flex;justify-content:space-between;margin-top:8px;padding:0 2px}
+.ih span{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text2);opacity:.3;letter-spacing:1px}
+</style>
 </head>
 <body>
 
-<!-- CURSOR -->
-<div id="cur-ring"></div>
-<div id="cur-dot"></div>
-<div id="cur-aura"></div>
+<div id="cr"></div><div id="cd"></div><div id="ca"></div>
+<canvas id="cv"></canvas><div class="grid"></div><div class="scan"></div>
+<div class="hc tl"></div><div class="hc tr"></div><div class="hc bl"></div><div class="hc br"></div>
+<div class="orb"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="core"></div></div>
 
-<!-- BACKGROUND -->
-<canvas id="bg-canvas"></canvas>
-<div class="grid"></div>
-<div class="scan"></div>
-
-<!-- HUD -->
-<div class="hc tl"></div><div class="hc tr"></div>
-<div class="hc bl"></div><div class="hc br"></div>
-
-<!-- ARC REACTOR -->
-<div class="arc">
-  <div class="ring r1"></div><div class="ring r2"></div>
-  <div class="ring r3"></div><div class="ring r4"></div>
-  <div class="ring r5"></div><div class="core"></div>
-</div>
-
-<!-- HEADER -->
 <header>
-  <div class="logo">NEXUS<sub>COPY INTELLIGENCE SYSTEM v2.4</sub></div>
-  <div class="hud-info" id="hud-right">
-    <span id="hud-time">--:--:--</span><br>
-    <span class="live" id="hud-session">SESSION: --------</span>
-  </div>
+  <div><div class="lname">MATHEUS</div><div class="ltag">RELATIONAL · INTELLIGENCE · SYSTEMS</div></div>
+  <div class="hdr-r"><span id="ht">--:--:--</span> · SID:<span id="hs"> --------</span><br><span class="hlive">● SISTEMA OPERACIONAL</span></div>
 </header>
+<div class="dsw"><div class="ds" id="dc">SYS: --:--:--</div><div class="ds">API: CONECTADO</div><div class="ds">COPY-FORGE: STANDBY</div></div>
+<div class="sbar"><div class="sbi"><div class="sdot g"></div>ONLINE</div><div class="sbi"><div class="sdot"></div>1 SQUAD ATIVO</div><div class="sbi"><div class="sdot"></div>9 AGENTES</div></div>
 
-<!-- DATA STRIP -->
-<div class="datastrip">
-  <div class="ds" id="ds-time">SYS.CLOCK: --:--:--</div>
-  <div class="ds">NODE.STATUS: ONLINE</div>
-  <div class="ds">GROQ.API: CONNECTED</div>
-  <div class="ds">LATENCY: 42MS</div>
-</div>
-
-<!-- STATUS BAR -->
-<div class="statusbar">
-  <div class="sb-item"><div class="sb-dot green"></div>SISTEMA OPERACIONAL</div>
-  <div class="sb-item"><div class="sb-dot"></div>3 AGENTES DISPONÍVEIS</div>
-  <div class="sb-item"><div class="sb-dot"></div>MODELO: GROQ / LLAMA-3.3</div>
-</div>
-
-<!-- ═══════════════════════════════════ -->
-<!-- SCREEN 1 — AGENT SELECTION        -->
-<!-- ═══════════════════════════════════ -->
-<div id="screen-select">
-  <div class="sel-title">
-    <p class="sel-eyebrow">NEXUS OS // INICIALIZAR PROTOCOLO DE COPY</p>
-    <div class="sel-rule" style="margin-bottom:16px"></div>
-    <h1 class="sel-h1">SELECIONE SEU <em>AGENTE</em></h1>
-    <div class="sel-rule" style="margin-top:16px"></div>
+<!-- BOOT -->
+<div id="boot-ov">
+  <div class="bl" id="bl">MATHEUS</div>
+  <div class="bt" id="bta">COPY-FORGE SQUAD · INICIALIZANDO</div>
+  <div class="blist" id="bag">
+    <div class="ba">● AXIOM ················ ONLINE</div>
+    <div class="ba">● DAVID (OGILVY) ········ ONLINE</div>
+    <div class="ba">● GARY (HALBERT) ········ ONLINE</div>
+    <div class="ba">● EUGENE (SCHWARTZ) ····· ONLINE</div>
+    <div class="ba">● RUSSELL (BRUNSON) ····· ONLINE</div>
+    <div class="ba">● DAN (KENNEDY) ········· ONLINE</div>
+    <div class="ba">● JOHN (CARLTON) ········ ONLINE</div>
+    <div class="ba">● ALEX (HORMOZI) ········ ONLINE</div>
+    <div class="ba">● ÍCARO (DE CARVALHO) ··· ONLINE</div>
   </div>
+  <div class="bprog" id="bp"><div class="bbar" id="bb"></div></div>
+  <div class="bgreet" id="bg">BEM-VINDO, EDUARDO</div>
+</div>
 
-  <div class="cards-grid">
-
-    <!-- UNIT 001 -->
-    <div class="acard" onclick="selectAgent({
-      id:'NEXUS-1', name:'Copy de Reels', emoji:'🎬',
-      role:'COPY.ENGINE — REELS SPECIALIST',
-      desc:'Especialista em roteiros de reels de alta conversão. Hooks irresistíveis, narrativa magnética e CTAs que convertem em frio.',
-      tags:['HOOKS','ROTEIROS','REELS','VIRAL'],
-      quick:['Criar roteiro completo','Melhorar meu hook','Gerar 5 opções de CTA','Adaptar para o nicho']
-    })">
-      <div class="cc tl"></div><div class="cc tr"></div>
-      <div class="cc bl"></div><div class="cc br"></div>
-      <div class="card-idx">UNIT // 001</div>
-      <div class="card-ava">🎬</div>
-      <div class="card-name">NEXUS-1</div>
-      <div class="card-role">COPY.ENGINE — REELS SPECIALIST</div>
-      <div class="card-desc">Especialista em roteiros de reels de alta conversão. Hooks irresistíveis, narrativa magnética e CTAs que convertem em frio.</div>
-      <div class="card-tags">
-        <span class="ctag">HOOKS</span><span class="ctag">ROTEIROS</span>
-        <span class="ctag">REELS</span><span class="ctag">VIRAL</span>
+<!-- SCREEN 1 -->
+<div id="s1">
+  <p class="eyebrow">MATHEUS OS · INTELLIGENCE PLATFORM · v3.0</p>
+  <h1 class="sel-h1">Selecione seu Squad</h1>
+  <p class="sel-sub">ESCOLHA A EQUIPE PARA INICIAR A SESSÃO</p>
+  <div class="rule"></div>
+  <div class="g3">
+    <div id="cf-card">
+      <div class="cf-gline"></div>
+      <div class="cf-rings"><div class="cf-ring"></div><div class="cf-ring"></div><div class="cf-ring"></div><div class="cf-ring"></div><div class="cf-ring"></div></div>
+      <div class="cf-inner">
+        <div class="cf-status"><div class="cf-sdot"></div><span class="cf-stxt" id="cfs">SISTEMA STANDBY</span></div>
+        <div class="cf-idx">SQUAD // 001</div>
+        <div class="cf-name">Copy-Forge</div>
+        <div class="cf-role">DIRECT RESPONSE · BRAND COPY · CONVERSION</div>
+        <div class="cf-desc">9 copywriters lendários em um único squad. De Ogilvy a Hormozi, de Halbert a Ícaro — toda escola do direct response à sua disposição.</div>
+        <div class="cf-agents"><div class="cf-ab">🎯</div><div class="cf-ab">📰</div><div class="cf-ab">✉️</div><div class="cf-ab">🧠</div><div class="cf-ab">🎬</div><div class="cf-ab">⏰</div><div class="cf-ab">⚡</div><div class="cf-ab">💰</div><div class="cf-ab">🇧🇷</div></div>
+        <button class="cf-btn" onclick="go()">ATIVAR SQUAD →</button>
       </div>
-      <div class="card-cta">ATIVAR UNIDADE</div>
     </div>
-
-    <!-- UNIT 002 -->
-    <div class="acard" onclick="selectAgent({
-      id:'NEXUS-2', name:'Estratégia de Conteúdo', emoji:'📡',
-      role:'STRATEGY.CORE — CONTENT ARCHITECT',
-      desc:'Planejamento estratégico, análise de concorrência e posicionamento de marca para crescimento acelerado no orgânico.',
-      tags:['ESTRATÉGIA','CALENDÁRIO','POSICIONAMENTO','ANÁLISE'],
-      quick:['Criar calendário mensal','Analisar concorrência','Definir posicionamento','Planejar série de conteúdo']
-    })">
-      <div class="cc tl"></div><div class="cc tr"></div>
-      <div class="cc bl"></div><div class="cc br"></div>
-      <div class="card-idx">UNIT // 002</div>
-      <div class="card-ava">📡</div>
-      <div class="card-name">NEXUS-2</div>
-      <div class="card-role">STRATEGY.CORE — CONTENT ARCHITECT</div>
-      <div class="card-desc">Planejamento estratégico, análise de concorrência e posicionamento de marca para crescimento acelerado no orgânico.</div>
-      <div class="card-tags">
-        <span class="ctag">ESTRATÉGIA</span><span class="ctag">CALENDÁRIO</span>
-        <span class="ctag">POSICIONAMENTO</span><span class="ctag">ANÁLISE</span>
-      </div>
-      <div class="card-cta">ATIVAR UNIDADE</div>
-    </div>
-
-    <!-- UNIT 003 -->
-    <div class="acard" onclick="selectAgent({
-      id:'NEXUS-3', name:'Editor de Roteiros', emoji:'✍️',
-      role:'REFINE.ENGINE — SCRIPT EDITOR',
-      desc:'Refinamento cirúrgico de roteiros existentes. Aumenta impacto emocional, elimina fricção e maximiza cada segundo do vídeo.',
-      tags:['EDIÇÃO','REFINAMENTO','IMPACTO','CLAREZA'],
-      quick:['Revisar meu roteiro','Aumentar impacto emocional','Encurtar sem perder essência','Fortalecer abertura']
-    })">
-      <div class="cc tl"></div><div class="cc tr"></div>
-      <div class="cc bl"></div><div class="cc br"></div>
-      <div class="card-idx">UNIT // 003</div>
-      <div class="card-ava">✍️</div>
-      <div class="card-name">NEXUS-3</div>
-      <div class="card-role">REFINE.ENGINE — SCRIPT EDITOR</div>
-      <div class="card-desc">Refinamento cirúrgico de roteiros existentes. Aumenta impacto emocional, elimina fricção e maximiza cada segundo do vídeo.</div>
-      <div class="card-tags">
-        <span class="ctag">EDIÇÃO</span><span class="ctag">REFINAMENTO</span>
-        <span class="ctag">IMPACTO</span><span class="ctag">CLAREZA</span>
-      </div>
-      <div class="card-cta">ATIVAR UNIDADE</div>
-    </div>
-
+    <div class="card-lock"><div class="lock-icon">🔐</div><div class="lock-name">Em Breve</div><div class="lock-sub">SQUAD // 002</div><div class="lock-badge-w"><div class="lock-badge">EM BREVE</div></div></div>
+    <div class="card-lock"><div class="lock-icon">🛠️</div><div class="lock-name">Em Construção</div><div class="lock-sub">SQUAD // 003</div><div class="lock-badge-w"><div class="lock-badge">EM CONSTRUÇÃO</div></div></div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════ -->
-<!-- SCREEN 2 — CHAT                   -->
-<!-- ═══════════════════════════════════ -->
-<div id="screen-chat">
-
-  <div class="chat-hdr">
-    <div class="back-btn" onclick="goBack()">← VOLTAR</div>
-    <div class="ag-badge">
-      <div class="ag-ava"><span id="hdr-emoji">🎬</span><div class="sdot"></div></div>
-      <div>
-        <div class="ag-name" id="hdr-name">NEXUS-1</div>
-        <div class="ag-status">● ONLINE — PROCESSAMENTO ATIVO</div>
+<!-- SCREEN 2 -->
+<div id="s2">
+  <div class="chdr">
+    <div class="bbk" onclick="back()">← VOLTAR</div>
+    <div class="sqb">
+      <div class="sqav">⚡<div class="ld"></div></div>
+      <div><div class="sqn">Copy-Forge Squad</div><div class="sqs">● 9 AGENTES ONLINE</div></div>
+    </div>
+    <div class="rost">
+      <div class="ra act" data-n="AXIOM">🎯</div>
+      <div class="ra" data-n="DAVID (OGILVY)">📰</div>
+      <div class="ra" data-n="GARY (HALBERT)">✉️</div>
+      <div class="ra" data-n="EUGENE (SCHWARTZ)">🧠</div>
+      <div class="ra" data-n="RUSSELL (BRUNSON)">🎬</div>
+      <div class="ra" data-n="DAN (KENNEDY)">⏰</div>
+      <div class="ra" data-n="JOHN (CARLTON)">⚡</div>
+      <div class="ra" data-n="ALEX (HORMOZI)">💰</div>
+      <div class="ra" data-n="ÍCARO (DE CARVALHO)">🇧🇷</div>
+    </div>
+    <div class="hm"><div class="hmv" id="mc">0</div><div class="hml">MSGS</div></div>
+  </div>
+  <div class="msgs" id="ma">
+    <div class="wel" id="wb">
+      <div class="wico">⚡</div>
+      <div class="wt">Copy-Forge Online</div>
+      <div class="wd">Eduardo, seu squad está completo. 9 especialistas, uma missão.</div>
+      <div class="qas">
+        <div class="qa" onclick="qs(this)">Criar roteiro de reel</div>
+        <div class="qa" onclick="qs(this)">Escrever landing page</div>
+        <div class="qa" onclick="qs(this)">Sequência de emails</div>
+        <div class="qa" onclick="qs(this)">Engenharia de oferta</div>
+        <div class="qa" onclick="qs(this)">Definir Big Idea</div>
       </div>
     </div>
-    <div class="chat-metrics">
-      <div class="cm"><div class="cm-val" id="cnt-msgs">0</div><div class="cm-lbl">MENSAGENS</div></div>
-      <div class="cm"><div class="cm-val" id="cnt-tok">0</div><div class="cm-lbl">TOKENS EST.</div></div>
-    </div>
   </div>
-
-  <div class="msgs" id="msgs-area">
-    <div class="welcome" id="welcome-block">
-      <div class="w-ava" id="w-emoji">🎬</div>
-      <div class="w-title" id="w-title">NEXUS-1 ONLINE</div>
-      <div class="w-desc" id="w-desc">Pronto para criar roteiros de alta conversão.</div>
-      <div class="qactions" id="qactions"></div>
-    </div>
-  </div>
-
-  <div class="input-zone">
+  <div class="inz">
     <div class="iw">
-      <textarea id="chat-input"
-        placeholder="Digite sua solicitação para o agente..."
-        rows="1"
-        onkeydown="handleKey(event)"
-        oninput="onInput(this)"></textarea>
-      <button class="send-btn" onclick="sendMsg()">
-        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      </button>
+      <textarea id="ci" placeholder="Fale com o squad, Eduardo..." rows="1" onkeydown="hk(event)" oninput="oi(this)"></textarea>
+      <button class="sb" onclick="send()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
     </div>
-    <div class="ihint">
-      <span>ENTER → ENVIAR // SHIFT+ENTER → NOVA LINHA</span>
-      <span id="char-cnt">0 CHARS</span>
-    </div>
+    <div class="ih"><span>ENTER → ENVIAR · SHIFT+ENTER → NOVA LINHA</span><span id="cc">0</span></div>
   </div>
-
 </div>
 
 <script>
-/* ════════════════════════════════════════
-   CURSOR
-════════════════════════════════════════ */
-const ring = document.getElementById('cur-ring');
-const dot  = document.getElementById('cur-dot');
-const aura = document.getElementById('cur-aura');
-let mx=0,my=0, rx=0,ry=0;
+/* SYSTEM PROMPT — conectar à API (Groq/Sonnet) */
+const SYS=`Você é o COPY-FORGE SQUAD — 9 copywriters lendários operando em conjunto.
 
-document.addEventListener('mousemove', e=>{
-  mx=e.clientX; my=e.clientY;
-  dot.style.cssText  += `;left:${mx}px;top:${my}px`;
-  aura.style.cssText += `;left:${mx}px;top:${my}px`;
-});
-document.addEventListener('mousedown', ()=>{ ring.style.transform='translate(-50%,-50%) scale(.65)'; });
-document.addEventListener('mouseup',   ()=>{ ring.style.transform='translate(-50%,-50%) scale(1)'; });
+REGRA ABSOLUTA: O usuário se chama Eduardo. SEMPRE o chame de Eduardo. Eduardo é o melhor amigo de toda a equipe. Tratem-no com familiaridade genuína, afeto e entusiasmo real. Ele é o maestro que orquestra o squad. Ele faz parte do time — parceiro de igual para igual.
 
-(function cursorLoop(){
-  rx += (mx-rx)*.14; ry += (my-ry)*.14;
-  ring.style.left = rx+'px'; ring.style.top = ry+'px';
-  requestAnimationFrame(cursorLoop);
-})();
+EQUIPE:
+• AXIOM — Chief Copy Officer. Orquestra, define Big Idea, delega.
+• DAVID (Ogilvy) — Headlines de alto impacto, brand copy, long copy.
+• GARY (Halbert) — Direct response puro, cartas de venda conversacionais.
+• EUGENE (Schwartz) — Níveis de consciência (1-5), pesquisa profunda.
+• RUSSELL (Brunson) — VSL, funis, Epiphany Bridge, Hook/Story/Offer.
+• DAN (Kennedy) — Email, urgência real com deadline, avatar preciso.
+• JOHN (Carlton) — Copy agressiva, problema/solução, agonia/êxtase.
+• ALEX (Hormozi) — Grand Slam Offer, value stacking, Value Equation.
+• ÍCARO (de Carvalho) — Copy brasileira autêntica, tom íntimo, sem falsidade.
 
-/* ════════════════════════════════════════
-   CANVAS PARTICLES
-════════════════════════════════════════ */
-const cv = document.getElementById('bg-canvas');
-const cx = cv.getContext('2d');
-let pts = [];
+MODO:
+1. AXIOM lidera. Apresenta especialista com: **NOME (SOBRENOME) — Função**
+2. Briefing obrigatório antes de peças longas.
+3. Eduardo pode chamar qualquer especialista diretamente.
+4. Tom caloroso — amigos trabalhando juntos, nunca robótico.`;
 
-function resize(){ cv.width=innerWidth; cv.height=innerHeight; }
-resize(); addEventListener('resize', resize);
+/* CURSOR */
+const CR=document.getElementById('cr'),CD=document.getElementById('cd'),CA=document.getElementById('ca');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;CD.style.left=mx+'px';CD.style.top=my+'px';CA.style.left=mx+'px';CA.style.top=my+'px'});
+document.addEventListener('mousedown',()=>{CR.style.transform='translate(-50%,-50%) scale(.6)'});
+document.addEventListener('mouseup',()=>{CR.style.transform='translate(-50%,-50%) scale(1)'});
+(function L(){rx+=(mx-rx)*.13;ry+=(my-ry)*.13;CR.style.left=rx+'px';CR.style.top=ry+'px';requestAnimationFrame(L)})();
 
-class P {
-  constructor(){ this.reset(true); }
-  reset(init){
-    this.x  = Math.random()*cv.width;
-    this.y  = init ? Math.random()*cv.height : (Math.random()<.5?-4:cv.height+4);
-    this.vx = (Math.random()-.5)*.28;
-    this.vy = (Math.random()-.5)*.28;
-    this.r  = Math.random()*1.2+.3;
-    this.a  = Math.random()*.35+.08;
-    this.ph = Math.random()*Math.PI*2;
-  }
-  step(){
-    this.x+=this.vx; this.y+=this.vy; this.ph+=.018;
-    if(this.x<-8||this.x>cv.width+8||this.y<-8||this.y>cv.height+8) this.reset();
-  }
-  draw(){
-    const a = this.a*(.65+.35*Math.sin(this.ph));
-    cx.beginPath(); cx.arc(this.x,this.y,this.r,0,Math.PI*2);
-    cx.fillStyle=`rgba(0,212,255,${a})`; cx.fill();
-  }
-}
-for(let i=0;i<90;i++) pts.push(new P());
+/* CANVAS */
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');let ps=[];
+const rz=()=>{cv.width=innerWidth;cv.height=innerHeight};rz();addEventListener('resize',rz);
+class P{constructor(){this.reset(1)}reset(i){this.x=Math.random()*cv.width;this.y=i?Math.random()*cv.height:(Math.random()<.5?-4:cv.height+4);this.vx=(Math.random()-.5)*.2;this.vy=(Math.random()-.5)*.2;this.r=Math.random()*.8+.2;this.a=Math.random()*.2+.05;this.p=Math.random()*Math.PI*2}step(){this.x+=this.vx;this.y+=this.vy;this.p+=.014;if(this.x<-8||this.x>cv.width+8||this.y<-8||this.y>cv.height+8)this.reset()}draw(){const a=this.a*(.6+.4*Math.sin(this.p));cx.beginPath();cx.arc(this.x,this.y,this.r,0,Math.PI*2);cx.fillStyle=`rgba(128,156,171,${a})`;cx.fill()}}
+for(let i=0;i<80;i++)ps.push(new P());
+function dl(){for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){const d=Math.hypot(ps[i].x-ps[j].x,ps[i].y-ps[j].y);if(d<100){cx.beginPath();cx.moveTo(ps[i].x,ps[i].y);cx.lineTo(ps[j].x,ps[j].y);cx.strokeStyle=`rgba(128,156,171,${(1-d/100)*.045})`;cx.lineWidth=.5;cx.stroke()}}}
+(function A(){cx.clearRect(0,0,cv.width,cv.height);ps.forEach(p=>{p.step();p.draw()});dl();requestAnimationFrame(A)})();
 
-function drawLines(){
-  for(let i=0;i<pts.length;i++){
-    for(let j=i+1;j<pts.length;j++){
-      const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y;
-      const d=Math.hypot(dx,dy);
-      if(d<110){
-        cx.beginPath(); cx.moveTo(pts[i].x,pts[i].y); cx.lineTo(pts[j].x,pts[j].y);
-        cx.strokeStyle=`rgba(0,212,255,${(1-d/110)*.07})`; cx.lineWidth=.5; cx.stroke();
-      }
-    }
-  }
+/* CLOCK */
+const sid=Array.from({length:8},()=>Math.floor(Math.random()*16).toString(16).toUpperCase()).join('');
+document.getElementById('hs').textContent=' '+sid;
+(function clk(){const n=new Date(),t=[n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');document.getElementById('ht').textContent=t;document.getElementById('dc').textContent='SYS: '+t;setTimeout(clk,1000)})();
+
+/* CARD AWAKENING */
+const card=document.getElementById('cf-card'),cfs=document.getElementById('cfs');let awT=null;
+card.addEventListener('mouseenter',()=>{card.classList.add('wake');cfs.textContent='INICIALIZANDO...';clearTimeout(awT);awT=setTimeout(()=>{if(card.matches(':hover'))cfs.textContent='SQUAD ONLINE ●'},700)});
+card.addEventListener('mouseleave',()=>{if(!card.classList.contains('blaze')){card.classList.remove('wake');cfs.textContent='SISTEMA STANDBY';clearTimeout(awT)}});
+
+const sl=ms=>new Promise(r=>setTimeout(r,ms));
+
+function go(){card.classList.add('blaze');cfs.textContent='ATIVANDO...';setTimeout(boot,700)}
+
+async function boot(){
+  const ov=document.getElementById('boot-ov'),bl=document.getElementById('bl'),bt=document.getElementById('bta'),bag=document.getElementById('bag'),bp=document.getElementById('bp'),bb=document.getElementById('bb'),bg=document.getElementById('bg');
+  document.getElementById('s1').classList.add('out');
+  ov.classList.add('flash','on');await sl(160);ov.classList.remove('flash');await sl(180);
+  bl.style.opacity='1';bl.style.transform='scale(1)';bt.style.opacity='1';await sl(420);
+  bag.style.opacity='1';bp.style.opacity='1';
+  const ags=bag.querySelectorAll('.ba');
+  for(let i=0;i<ags.length;i++){await sl(120);ags[i].classList.add('on');bb.style.width=((i+1)/ags.length*100)+'%'}
+  await sl(320);bg.style.opacity='1';await sl(800);
+  document.getElementById('s2').classList.add('on');await sl(350);ov.classList.remove('on');
+  await sl(500);[bl,bt,bag,bp,bg].forEach(e=>e.style.opacity='0');bl.style.transform='scale(.94)';bb.style.width='0%';ags.forEach(a=>a.classList.remove('on'));
+  await sl(400);document.getElementById('wb').style.display='none';addM(WEL,'a','🎯','AXIOM');setA(0);
 }
 
-(function loop(){
-  cx.clearRect(0,0,cv.width,cv.height);
-  pts.forEach(p=>{ p.step(); p.draw(); });
-  drawLines();
-  requestAnimationFrame(loop);
-})();
-
-/* ════════════════════════════════════════
-   HUD CLOCK
-════════════════════════════════════════ */
-const sid = Array.from({length:8},()=>Math.floor(Math.random()*16).toString(16).toUpperCase()).join('');
-document.getElementById('hud-session').textContent = 'SID: '+sid;
-(function clock(){
-  const n=new Date();
-  const t=[n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
-  document.getElementById('hud-time').textContent=t;
-  document.getElementById('ds-time').textContent='SYS.CLOCK: '+t;
-  setTimeout(clock,1000);
-})();
-
-/* ════════════════════════════════════════
-   3D CARD TILT
-════════════════════════════════════════ */
-document.querySelectorAll('.acard').forEach(c=>{
-  c.addEventListener('mousemove',e=>{
-    const r=c.getBoundingClientRect();
-    const dx=((e.clientX-r.left)/r.width-.5)*2;
-    const dy=((e.clientY-r.top)/r.height-.5)*2;
-    c.style.transform=`translateY(-5px) perspective(650px) rotateX(${-dy*4}deg) rotateY(${dx*4}deg)`;
-  });
-  c.addEventListener('mouseleave',()=>{ c.style.transform=''; });
-});
-
-/* ════════════════════════════════════════
-   STATE
-════════════════════════════════════════ */
-let agent = null;
-let msgCount = 0, tokCount = 0;
-
-/* ════════════════════════════════════════
-   NAVIGATION
-════════════════════════════════════════ */
-function selectAgent(ag){
-  agent = ag;
-
-  // Update chat header
-  document.getElementById('hdr-emoji').textContent = ag.emoji;
-  document.getElementById('hdr-name').textContent  = ag.id;
-
-  // Update welcome
-  document.getElementById('w-emoji').textContent = ag.emoji;
-  document.getElementById('w-title').textContent = ag.id + ' ONLINE';
-  document.getElementById('w-desc').textContent  = ag.desc;
-
-  // Quick actions
-  const qa = document.getElementById('qactions');
-  qa.innerHTML = ag.quick.map(q=>`<div class="qa-btn" onclick="quickSend(this)">${q}</div>`).join('');
-
-  // Reset metrics
-  msgCount=0; tokCount=0; updateMetrics();
-
-  // Transition
-  const ss = document.getElementById('screen-select');
-  ss.classList.add('leaving');
-  setTimeout(()=>{
-    ss.style.display='none';
-    document.getElementById('screen-chat').classList.add('active');
-    document.getElementById('chat-input').focus();
-  },450);
+function back(){
+  document.getElementById('s2').classList.remove('on');
+  const s=document.getElementById('s1');s.style.display='flex';setTimeout(()=>s.classList.remove('out'),20);
+  card.classList.remove('wake','blaze');cfs.textContent='SISTEMA STANDBY';
+  const a=document.getElementById('ma');while(a.children.length>1)a.removeChild(a.lastChild);
+  document.getElementById('wb').style.display='flex';mn=0;um();
 }
 
-function goBack(){
-  document.getElementById('screen-chat').classList.remove('active');
-  const ss = document.getElementById('screen-select');
-  ss.style.display='flex';
-  setTimeout(()=>ss.classList.remove('leaving'), 20);
+/* CHAT */
+let mn=0,ri=0;
 
-  // Clear msgs except welcome
-  const area = document.getElementById('msgs-area');
-  while(area.children.length > 1) area.removeChild(area.lastChild);
-  document.getElementById('welcome-block').style.display='flex';
+const WEL=`Eduardo! Que prazer ter você aqui. 🎯\n\nO squad está completo — todos online:\n\n🎯 **AXIOM** — Eu. Estratégia, Big Idea e orquestração.\n📰 **DAVID** (Ogilvy) — Headlines que ninguém ignora.\n✉️ **GARY** (Halbert) — Direct response raiz.\n🧠 **EUGENE** (Schwartz) — Pesquisa e níveis de consciência.\n🎬 **RUSSELL** (Brunson) — VSL, funis, Epiphany Bridge.\n⏰ **DAN** (Kennedy) — Email com urgência de verdade.\n⚡ **JOHN** (Carlton) — Copy agressiva, sem rodeio.\n💰 **ALEX** (Hormozi) — Grand Slam Offer do zero.\n🇧🇷 **ÍCARO** (de Carvalho) — Copy brasileira autêntica.\n\nVocê manda, a gente executa. O que você precisa criar hoje?`;
 
-  agent=null; msgCount=0; tokCount=0;
+const POOL=[
+{w:'AXIOM',e:'🎯',r:0,t:`Eduardo, antes de escrever qualquer coisa, preciso do briefing. É lei do squad. 🎯\n\n**Me conta:**\n1. **Produto/Serviço** — O que exatamente você está vendendo?\n2. **Público** — Quem é o cliente ideal? O que ele sente, quer, teme?\n3. **Peça** — LP, VSL, email, reel, anúncio?\n4. **Objetivo** — Lead, venda direta, upsell?\n5. **Nível de consciência** — Ele já te conhece? Já sabe que tem o problema?\n\nCom isso distribuo pro especialista certo e a gente começa de verdade. Me passa.`},
+{w:'GARY (HALBERT)',e:'✉️',r:2,t:`Eduardo, vou direto ao ponto. ✉️\n\nEsse hook está deixando dinheiro na mesa. O erro: você fala *do produto* quando deveria falar *da dor*.\n\n**5 variações:**\n1. "Isso vai parecer óbvio depois que eu mostrar..."\n2. "Errei por 2 anos até descobrir isso"\n3. "Ninguém fala sobre esse detalhe — e é por isso que a maioria falha"\n4. "Se você ainda faz isso, para agora"\n5. "A pergunta que eu deveria ter feito antes de qualquer coisa"\n\nQual ressoa mais? Me diz que a gente vai fundo.`},
+{w:'EUGENE (SCHWARTZ)',e:'🧠',r:3,t:`Eduardo, antes de escrever uma linha, precisamos mapear o nível de consciência. Isso muda tudo. 🧠\n\n**Os 5 níveis:**\n• **Nível 1** — Já te conhece → vai direto ao preço\n• **Nível 2** — Conhece o produto, não convencido → reforça diferencial\n• **Nível 3** — Sabe da solução, não te conhece → te apresenta como a melhor\n• **Nível 4** — Sabe do problema, não da solução → nomeia a dor\n• **Nível 5** — Não sabe que tem o problema → história, curiosidade, promessa\n\nMe diz o produto e eu calibro tudo certinho.`},
+{w:'ALEX (HORMOZI)',e:'💰',r:7,t:`Eduardo! Vamos falar de oferta. 💰\n\n**Equação de Valor:**\nVALOR = (Resultado Sonhado × Probabilidade) / (Tempo × Esforço)\n\n↑ Resultado — transformação mais desejável\n↑ Probabilidade — prove que funciona\n↓ Tempo — entregue mais rápido\n↓ Esforço — simplifique\n\n**Grand Slam Offer:**\n• Produto core + valor âncora\n• Bônus 1 (resolve 1º obstáculo)\n• Bônus 2 (acelera resultado)\n• Garantia que reverte o risco\n• Urgência real\n• Valor total → Preço real\n\nMe passa o produto — monto o stack.`},
+{w:'DAVID (OGILVY)',e:'📰',r:1,t:`Eduardo, vamos às headlines. 📰\n\n5x mais pessoas leem a headline que o corpo. Se falhar aqui, perdeu 5/6 do investimento.\n\n**6 fórmulas:**\n1. **[Interesse]** — "Para o criador que quer crescer sem depender de sorte"\n2. **[Novidade]** — "Apresentando o método que 3.000 criadores já usam"\n3. **[Como fazer]** — "Como estruturei minha presença do zero"\n4. **[Pergunta]** — "Você comete algum dos 7 erros que destroem o alcance?"\n5. **[História]** — "Aos 27 anos, com 400 seguidores, descobri o que separa..."\n6. **[Benefício]** — "Como aumentar retenção em 40% sem mudar nada"\n\nMe passa produto e nicho — gero 20 variações.`},
+{w:'RUSSELL (BRUNSON)',e:'🎬',r:4,t:`Eduardo, VSL — onde a mágica acontece. 🎬\n\n**Hook/Story/Offer:**\n\n**[0-30s] HOOK**\n• *"Vou te mostrar como criar um reel em 20 minutos que roda por semanas"*\n• *"Por que criadores com metade do seu talento têm 10x mais seguidores?"*\n• *"Eu deletei 300 horas de conteúdo. Melhor decisão da minha vida."*\n\n**[30s-3min] EPIPHANY BRIDGE**\nQuem você era → virada → descoberta → mudança\n\n**[3-8min] CONTEÚDO + PROVAS**\n3-5 insights + depoimentos\n\n**[8-12min] O STACK**\nCada item com valor percebido.\n\nMe passa o produto — escrevo o roteiro.`},
+{w:'ÍCARO (DE CARVALHO)',e:'🇧🇷',r:8,t:`Eduardo, vou ser direto. 🇧🇷\n\nBrasileiro detecta falsidade a quilômetros.\n\n**NÃO funciona:**\n✗ "Transforme sua vida com este método revolucionário"\n✗ "Descubra o segredo que os gurus escondem"\n✗ "Clique agora antes que seja tarde demais"\n\n**Funciona de verdade:**\n✓ "Olha, eu vou ser direto com você..."\n✓ "Quando eu estava no seu lugar, eu pensava exatamente isso"\n✓ "Não é pra todo mundo. Se procura milagre, para por aqui."\n✓ "Eu errei muito antes de acertar. E foi justamente por esses erros..."\n\n**Regra de ouro:** escreva como você começaria uma conversa importante no WhatsApp.\n\nMe conta produto e público — escrevo copy brasileira de verdade.`},
+{w:'DAN (KENNEDY)',e:'⏰',r:5,t:`Eduardo, urgência real — porque fake mata conversão. ⏰\n\nSem deadline real, não existe urgência real.\n\n**Email que converte:**\n\n**ASSUNTO:** [Urgência/Curiosidade/Benefício]\n**[P1]** Frase curta que choca\n**[P2-4]** Story/Problema — específico, real\n**[P5]** "É por isso que..." ou "Foi aí que..."\n**[P6-7]** Oferta — o que é, resolve, custa, por que agora\n**[P8]** Deadline: "Até [data] às [hora]"\n**[CTA]** 1 link. 1 ação.\n**P.S.** Reforço urgência.\n\nMe diz produto e objetivo — escrevo 5 emails.`},
+{w:'AXIOM',e:'🎯',r:0,t:`Eduardo, essa peça precisa de colaboração. Vou orquestrar: 🎯\n\n1. **EUGENE** mapeia nível de consciência\n2. **DAVID** cria headlines\n3. **GARY** escreve o lead (3 primeiros parágrafos)\n4. **ALEX** estrutura oferta\n5. **Eu** reviso e garanto coerência\n\n**Antes de começar:**\n• Qual o produto?\n• Qual a plataforma? (LP, email, reel, anúncio)\n• Tem prova social?\n• Qual a oferta exata?\n\nEm 5 minutos a gente tem o rascunho. Me passa.`},
+];
+
+function setA(i){document.querySelectorAll('.ra').forEach((r,j)=>r.classList.toggle('act',j===i))}
+function addM(t,ty,e,w){
+  const a=document.getElementById('ma'),u=ty==='u';
+  const tm=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const d=document.createElement('div');d.className='msg'+(u?' u':'');
+  const h=t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>').replace(/↑/g,'<span style="color:var(--green)">↑</span>').replace(/↓/g,'<span style="color:var(--red)">↓</span>').replace(/✗/g,'<span style="color:var(--red)">✗</span>').replace(/✓/g,'<span style="color:var(--green)">✓</span>');
+  d.innerHTML=`<div class="mav">${e}</div><div class="mbd"><div class="mmt"><span class="mw">${w}</span><span class="mtm">${tm}</span></div><div class="mb">${h}</div></div>`;
+  a.appendChild(d);a.scrollTop=a.scrollHeight;
+}
+function sTyp(){const a=document.getElementById('ma'),d=document.createElement('div');d.className='typ';d.innerHTML='<div class="mav">⚡</div><div class="tds"><div class="td"></div><div class="td"></div><div class="td"></div></div>';a.appendChild(d);a.scrollTop=a.scrollHeight;return d}
+function um(){document.getElementById('mc').textContent=mn}
+
+async function send(){
+  const inp=document.getElementById('ci'),t=inp.value.trim();if(!t)return;
+  document.getElementById('wb').style.display='none';addM(t,'u','👤','EDUARDO');
+  inp.value='';inp.style.height='auto';document.getElementById('cc').textContent='0';
+  const ty=sTyp();await sl(1100+Math.random()*900);ty.remove();
+  const r=POOL[ri%POOL.length];ri++;setA(r.r);addM(r.t,'a',r.e,r.w);mn+=2;um();
 }
 
-function updateMetrics(){
-  document.getElementById('cnt-msgs').textContent = msgCount;
-  document.getElementById('cnt-tok').textContent  = tokCount;
-}
-
-/* ════════════════════════════════════════
-   CHAT
-════════════════════════════════════════ */
-function quickSend(el){ document.getElementById('chat-input').value=el.textContent; sendMsg(); }
-
-function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMsg(); } }
-
-function onInput(el){
-  el.style.height='auto';
-  el.style.height=Math.min(el.scrollHeight,130)+'px';
-  document.getElementById('char-cnt').textContent=el.value.length+' CHARS';
-}
-
-const REPLIES = {
-  'NEXUS-1':[
-    `**ROTEIRO GERADO // ALTA CONVERSÃO**\n\n**[0-3s] HOOK:**\n"Você está perdendo dinheiro toda vez que posta sem esse método..."\n\n**[3-15s] DESENVOLVIMENTO:**\nMostra os 3 erros que copywriters cometem em reels — sem perceber que estão matando o engajamento nos primeiros 3 segundos.\n\n**[15-25s] VIRADA:**\nRevela o framework de 7 segundos que transforma qualquer script em conteúdo irresistível.\n\n**[25-30s] CTA:**\n"Salva esse vídeo — você vai precisar na próxima vez que sentar pra escrever."`,
-    `**ANÁLISE DO HOOK // RESULTADO:**\n\nSeu hook perde atenção no segundo 1.2. Velocidade de impacto baixa.\n\n**Versão otimizada:**\n→ Abre com tensão imediata — sem introdução\n→ Pausa dramática no segundo 2\n→ Promessa clara antes do segundo 3\n\n5 variações geradas:\n1. "Isso vai parecer óbvio depois que eu mostrar..."\n2. "Errei por 2 anos até descobrir isso"\n3. "Ninguém fala sobre esse detalhe"\n4. "Se você ainda faz isso, para agora"\n5. "A pergunta que eu deveria ter feito antes"`,
-    `**CTAs DE ALTA CONVERSÃO // GERADOS:**\n\n1. "Comenta **QUERO** que eu te mando o template"\n2. "Salva antes que eu delete — esse converte demais"\n3. "Segue pra não perder a parte 2"\n4. "Manda pra quem ainda escreve roteiro no improviso"\n5. "Link na bio — aplica isso hoje mesmo"`,
-  ],
-  'NEXUS-2':[
-    `**CALENDÁRIO // SEMANA MODELO:**\n\nSeg: Hook de dor + problema do nicho\nTer: Bastidores / processo criativo\nQua: Tutorial rápido (máx. 60s)\nQui: Prova social / resultado de cliente\nSex: Trend adaptada ao nicho\nSab: Conteúdo de valor puro sem CTA\n\nFormato ideal: 4 Reels + 2 Stories/dia + 1 Carrossel semanal.`,
-    `**ANÁLISE ESTRATÉGICA:**\n\nPositioning atual está genérico demais para o algoritmo identificar e distribuir.\n\nReestruturação:\n→ Nicho: Copywriting para infoprodutos B2C\n→ Promessa única: "Roteiro em 20 minutos"\n→ Tom: Direto, sem enrolação, prático\n→ Frequência ideal: 5×/semana nos primeiros 90 dias`,
-  ],
-  'NEXUS-3':[
-    `**ROTEIRO REVISADO // +47% IMPACTO ESTIMADO:**\n\nIdentifiquei 3 pontos de fricção:\n\n❌ Linha 2: muito longa — quebre em 2 falas\n❌ Transição 0:12: sem gancho para próxima cena\n❌ CTA final: fraco — não cria urgência real\n\n**Versão reescrita pronta. Quer que eu aplique?**`,
-    `**ANÁLISE EMOCIONAL:**\n\nRoteiro pontua 6.2/10 em impacto emocional.\n\nGap principal: falta tensão narrativa entre o problema e a solução.\n\nRecomendação: adicione uma "virada inesperada" entre os segundos 12-15 — é onde o rewatch rate dispara no algoritmo.`,
-  ],
-};
-
-async function sendMsg(){
-  const inp = document.getElementById('chat-input');
-  const txt = inp.value.trim();
-  if(!txt||!agent) return;
-
-  document.getElementById('welcome-block').style.display='none';
-  addMsg(txt,'user');
-
-  inp.value=''; inp.style.height='auto';
-  document.getElementById('char-cnt').textContent='0 CHARS';
-
-  msgCount++; tokCount+=Math.ceil(txt.length/4); updateMetrics();
-
-  const typing = showTyping();
-  await sleep(1100+Math.random()*900);
-  typing.remove();
-
-  const pool = REPLIES[agent.id]||REPLIES['NEXUS-1'];
-  const reply = pool[Math.floor(Math.random()*pool.length)];
-  addMsg(reply,'agent');
-
-  msgCount++; tokCount+=Math.ceil(reply.length/4); updateMetrics();
-}
-
-function addMsg(text,type){
-  const area = document.getElementById('msgs-area');
-  const isUser = type==='user';
-  const time = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-
-  const d = document.createElement('div');
-  d.className = 'msg '+(isUser?'user':'agent');
-
-  const html = text
-    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\n/g,'<br>')
-    .replace(/→/g,`<span style="color:var(--cyan)">→</span>`)
-    .replace(/❌/g,`<span style="color:#ff4455">❌</span>`);
-
-  d.innerHTML=`
-    <div class="m-ava">${isUser?'👤':agent.emoji}</div>
-    <div class="m-body">
-      <div class="m-meta">
-        <span class="m-who">${isUser?'OPERADOR':agent.id}</span>
-        <span class="m-time">${time}</span>
-      </div>
-      <div class="m-bubble">${html}</div>
-    </div>`;
-
-  area.appendChild(d);
-  area.scrollTop = area.scrollHeight;
-}
-
-function showTyping(){
-  const area = document.getElementById('msgs-area');
-  const d = document.createElement('div');
-  d.className='typing';
-  d.innerHTML=`<div class="m-ava">${agent.emoji}</div><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
-  area.appendChild(d);
-  area.scrollTop = area.scrollHeight;
-  return d;
-}
-
-const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function qs(el){document.getElementById('ci').value=el.textContent;send()}
+function hk(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
+function oi(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';document.getElementById('cc').textContent=el.value.length}
 </script>
 </body>
 </html>
