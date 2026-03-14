@@ -199,6 +199,140 @@ header{position:fixed;top:0;left:0;right:0;z-index:20;padding:15px 44px;display:
 .sb svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
 .ih{display:flex;justify-content:space-between;margin-top:8px;padding:0 2px}
 .ih span{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text2);opacity:.3;letter-spacing:1px}
+
+/* ========== MOBILE ========== */
+
+/* Touch devices: hide custom cursor, restore default */
+@media(hover:none),(pointer:coarse){
+  body{cursor:auto}
+  #cr,#cd,#ca{display:none!important}
+}
+
+/* Use dvh where supported for mobile browser chrome */
+@supports(height:100dvh){
+  html,body{height:100dvh}
+  #s1{min-height:100dvh}
+  #s2{height:100dvh}
+}
+
+/* ≤ 768px — tablets & phones */
+@media(max-width:768px){
+  /* Header */
+  header{padding:12px 16px}
+  .lname{font-size:16px;letter-spacing:5px}
+  .ltag{font-size:7px;letter-spacing:2.5px}
+  .hdr-r{font-size:8px;letter-spacing:1.5px}
+
+  /* HUD elements */
+  .dsw{top:64px;right:12px}
+  .ds{font-size:8px}
+  .hc{width:28px;height:28px}
+  .hc.tl{top:10px;left:10px}
+  .hc.tr{top:10px;right:10px}
+  .hc.bl{bottom:10px;left:10px}
+  .hc.br{bottom:10px;right:10px}
+
+  /* Status bar */
+  .sbar{gap:16px;bottom:10px}
+  .sbi{font-size:8px;letter-spacing:1.5px}
+
+  /* Screen 1 */
+  #s1{padding:80px 16px 70px}
+  .eyebrow{font-size:8px;letter-spacing:3px}
+  .sel-h1{font-size:clamp(22px,6vw,32px)}
+  .sel-sub{font-size:9px;letter-spacing:2px;margin-bottom:28px}
+  .rule{margin:10px auto 28px}
+  .g3{gap:12px}
+
+  /* Card */
+  #cf-card{padding:24px 18px}
+  .cf-name{font-size:22px}
+  .cf-desc{font-size:12.5px}
+  .cf-agents{gap:4px}
+  .cf-ab{width:26px;height:26px;font-size:11px}
+  .cf-btn{font-size:11px;padding:10px 18px}
+  .card-lock{padding:24px 18px}
+
+  /* Boot overlay */
+  .bl{font-size:28px;letter-spacing:6px}
+  .bt{font-size:9px;letter-spacing:3px;margin-bottom:30px}
+  .ba{font-size:8.5px;letter-spacing:1px}
+  .bprog{width:180px}
+  .bgreet{font-size:16px;letter-spacing:3px}
+
+  /* Chat header */
+  .chdr{padding:10px 12px;gap:8px;flex-wrap:wrap}
+  .bbk{font-size:8px;padding:5px 8px}
+  .sqav{width:30px;height:30px;font-size:13px}
+  .sqn{font-size:12px}
+  .sqs{font-size:8px}
+  .rost{gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:50vw;flex-shrink:1}
+  .rost::-webkit-scrollbar{display:none}
+  .ra{width:24px;height:24px;font-size:10px;flex-shrink:0}
+  .hm{margin-left:8px}
+  .hmv{font-size:12px}
+
+  /* Messages */
+  .msgs{padding:16px 12px;gap:14px}
+  .wel{padding:30px 10px}
+  .wico{width:56px;height:56px;font-size:22px;margin-bottom:14px}
+  .wt{font-size:18px;letter-spacing:2px}
+  .wd{font-size:13px;margin-bottom:20px}
+  .qas{gap:6px}
+  .qa{font-size:11px;padding:7px 12px}
+  .msg{max-width:100%}
+  .mav{width:28px;height:28px;font-size:12px}
+  .mb{padding:10px 14px;font-size:13px;line-height:1.65;border-radius:2px 10px 10px 10px}
+  .msg.u .mb{border-radius:10px 2px 10px 10px}
+  .mw{font-size:8px}
+  .mtm{font-size:7px}
+
+  /* Input */
+  .inz{padding:10px 12px 14px}
+  .iw{padding:10px 12px;border-radius:5px}
+  #ci{font-size:14px}
+  .sb{width:34px;height:34px}
+  .ih{margin-top:6px}
+  .ih span{font-size:7px}
+
+  /* Orbital */
+  .orb{width:240px;height:240px;bottom:-80px;right:-80px}
+}
+
+/* ≤ 480px — small phones */
+@media(max-width:480px){
+  header{padding:10px 12px}
+  .lname{font-size:14px;letter-spacing:4px}
+  .ltag{font-size:6.5px;letter-spacing:2px}
+  .hdr-r{display:none}
+
+  .dsw{display:none}
+  .sbar{display:none}
+
+  #s1{padding:70px 12px 50px}
+  .sel-h1{font-size:22px}
+  .sel-sub{margin-bottom:22px}
+
+  .cf-desc{font-size:12px;line-height:1.6}
+  .cf-role{font-size:8.5px}
+  .cf-idx{font-size:8px}
+
+  .chdr{padding:8px 10px;gap:6px}
+  .sqb{gap:8px}
+  .rost{max-width:40vw}
+  .ra{width:22px;height:22px;font-size:9px}
+
+  .msgs{padding:12px 10px;gap:12px}
+  .wel{padding:20px 6px}
+  .wico{width:48px;height:48px;font-size:18px}
+  .wt{font-size:16px}
+  .wd{font-size:12px}
+  .qas{flex-direction:column;align-items:stretch}
+  .qa{text-align:center}
+  .mb{padding:9px 12px;font-size:12.5px}
+
+  .inz{padding:8px 10px 12px}
+}
 </style>
 </head>
 <body>
@@ -286,11 +420,11 @@ header{position:fixed;top:0;left:0;right:0;z-index:20;padding:15px 44px;display:
       <div class="wt">Copy-Forge Online</div>
       <div class="wd">Eduardo, seu squad está completo. 9 especialistas, uma missão.</div>
       <div class="qas">
-        <div class="qa" onclick="qs(this)">Criar roteiro de reel</div>
-        <div class="qa" onclick="qs(this)">Escrever landing page</div>
-        <div class="qa" onclick="qs(this)">Sequência de emails</div>
-        <div class="qa" onclick="qs(this)">Engenharia de oferta</div>
-        <div class="qa" onclick="qs(this)">Definir Big Idea</div>
+        <div class="qa" onclick="qs(this)">Criar reel de autoridade</div>
+        <div class="qa" onclick="qs(this)">Reel pra público frio</div>
+        <div class="qa" onclick="qs(this)">Hook que trava o scroll</div>
+        <div class="qa" onclick="qs(this)">Reel com história do Leo</div>
+        <div class="qa" onclick="qs(this)">Reel educativo com valor</div>
       </div>
     </div>
   </div>
@@ -408,8 +542,17 @@ document.getElementById('hs').textContent=' '+sid;
 
 /* CARD AWAKENING */
 const card=document.getElementById('cf-card'),cfs=document.getElementById('cfs');let awT=null;
-card.addEventListener('mouseenter',()=>{card.classList.add('wake');cfs.textContent='INICIALIZANDO...';clearTimeout(awT);awT=setTimeout(()=>{if(card.matches(':hover'))cfs.textContent='SQUAD ONLINE ●'},700)});
-card.addEventListener('mouseleave',()=>{if(!card.classList.contains('blaze')){card.classList.remove('wake');cfs.textContent='SISTEMA STANDBY';clearTimeout(awT)}});
+const isTouch='ontouchstart' in window||navigator.maxTouchPoints>0;
+
+if(!isTouch){
+  card.addEventListener('mouseenter',()=>{card.classList.add('wake');cfs.textContent='INICIALIZANDO...';clearTimeout(awT);awT=setTimeout(()=>{if(card.matches(':hover'))cfs.textContent='SQUAD ONLINE ●'},700)});
+  card.addEventListener('mouseleave',()=>{if(!card.classList.contains('blaze')){card.classList.remove('wake');cfs.textContent='SISTEMA STANDBY';clearTimeout(awT)}});
+}else{
+  card.addEventListener('touchstart',e=>{
+    if(card.classList.contains('blaze'))return;
+    if(!card.classList.contains('wake')){e.preventDefault();card.classList.add('wake');cfs.textContent='INICIALIZANDO...';clearTimeout(awT);awT=setTimeout(()=>cfs.textContent='SQUAD ONLINE ●',700)}
+  },{passive:false});
+}
 
 const sl=ms=>new Promise(r=>setTimeout(r,ms));
 
