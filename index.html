@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS — Copy Intelligence System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --blue: #0055cc;
+      --orange: #ff6b00;
+      --green: #00ff88;
+      --bg: #020408;
+      --bg2: #050d18;
+      --bg3: #0a1628;
+      --text: #e0f0ff;
+      --muted: #4a7a9b;
+      --grid: rgba(0,212,255,0.035);
+      --glow: rgba(0,212,255,0.35);
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      cursor: none;
+    }
+
+    /* ─── CURSOR ──────────────────────────────── */
+    #cur-ring {
+      position: fixed; width:24px; height:24px;
+      border: 1.5px solid var(--cyan); border-radius:50%;
+      pointer-events:none; z-index:9999;
+      transform: translate(-50%,-50%);
+      transition: width .2s, height .2s, border-color .2s;
+    }
+    #cur-dot {
+      position: fixed; width:4px; height:4px;
+      background: var(--cyan); border-radius:50%;
+      pointer-events:none; z-index:10000;
+      transform: translate(-50%,-50%);
+    }
+    #cur-aura {
+      position: fixed; width:300px; height:300px;
+      border-radius:50%; pointer-events:none; z-index:1;
+      background: radial-gradient(circle, rgba(0,212,255,.06) 0%, transparent 65%);
+      transform: translate(-50%,-50%);
+      transition: left .12s ease, top .12s ease;
+    }
+    body:has(a:hover) #cur-ring,
+    body:has(button:hover) #cur-ring,
+    body:has(.agent-card:hover) #cur-ring { width:40px; height:40px; border-color: var(--cyan); }
+
+    /* ─── CANVAS ──────────────────────────────── */
+    #bg-canvas { position:fixed; inset:0; z-index:0; }
+
+    /* ─── GRID ────────────────────────────────── */
+    .grid {
+      position:fixed; inset:0; z-index:1; pointer-events:none;
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+
+    /* ─── SCAN LINE ───────────────────────────── */
+    .scan {
+      position:fixed; left:0; width:100%; height:1px; z-index:2;
+      background: linear-gradient(90deg, transparent 0%, rgba(0,212,255,.4) 50%, transparent 100%);
+      animation: scan 5s linear infinite;
+    }
+    @keyframes scan { from { top:0 } to { top:100vh } }
+
+    /* ─── HUD CORNERS ─────────────────────────── */
+    .hc { position:fixed; width:52px; height:52px; z-index:3; pointer-events:none; opacity:.55; }
+    .hc.tl { top:18px; left:18px; border-top:1.5px solid var(--cyan); border-left:1.5px solid var(--cyan); }
+    .hc.tr { top:18px; right:18px; border-top:1.5px solid var(--cyan); border-right:1.5px solid var(--cyan); }
+    .hc.bl { bottom:18px; left:18px; border-bottom:1.5px solid var(--cyan); border-left:1.5px solid var(--cyan); }
+    .hc.br { bottom:18px; right:18px; border-bottom:1.5px solid var(--cyan); border-right:1.5px solid var(--cyan); }
+
+    /* ─── ARC REACTOR (deco) ──────────────────── */
+    .arc {
+      position:fixed; bottom:-80px; right:-80px;
+      width:260px; height:260px; z-index:0; pointer-events:none; opacity:.055;
+    }
+    .arc .ring {
+      position:absolute; border-radius:50%; border:1px solid var(--cyan);
+      top:50%; left:50%; transform:translate(-50%,-50%);
+    }
+    .arc .r1 { width:50px;  height:50px;  animation: spin 3s linear infinite; }
+    .arc .r2 { width:90px;  height:90px;  animation: spin 6s linear infinite reverse; }
+    .arc .r3 { width:140px; height:140px; animation: spin 11s linear infinite; }
+    .arc .r4 { width:200px; height:200px; animation: spin 18s linear infinite reverse; }
+    .arc .r5 { width:260px; height:260px; animation: spin 25s linear infinite; }
+    .arc .core {
+      position:absolute; width:18px; height:18px; border-radius:50%;
+      background: radial-gradient(circle, var(--cyan), transparent);
+      top:50%; left:50%; transform:translate(-50%,-50%);
+    }
+    @keyframes spin { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+
+    /* ─── HEADER ──────────────────────────────── */
+    header {
+      position:fixed; top:0; left:0; right:0; z-index:20;
+      padding:18px 44px;
+      display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px solid rgba(0,212,255,.08);
+      background: rgba(2,4,8,.75); backdrop-filter:blur(20px);
+    }
+    .logo {
+      font-family:'Orbitron',sans-serif; font-size:20px; font-weight:900;
+      letter-spacing:7px; color:var(--cyan);
+      text-shadow: 0 0 18px rgba(0,212,255,.5);
+    }
+    .logo sub {
+      display:block; font-size:9px; letter-spacing:4px;
+      color:var(--muted); font-weight:400; margin-top:1px;
+    }
+    .hud-info {
+      font-family:'Share Tech Mono',monospace; font-size:10px;
+      color:var(--muted); letter-spacing:2px; text-align:right;
+      line-height:1.8;
+    }
+    .hud-info .live { color:var(--green); }
+
+    /* ─── STATUS BAR ──────────────────────────── */
+    .statusbar {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+      z-index:20; display:flex; gap:36px; align-items:center;
+      pointer-events:none;
+    }
+    .sb-item {
+      font-family:'Share Tech Mono',monospace; font-size:9px;
+      color:var(--muted); letter-spacing:2px;
+      display:flex; align-items:center; gap:7px;
+    }
+    .sb-dot {
+      width:5px; height:5px; border-radius:50%; background:var(--cyan);
+      animation: pls 2.2s ease-in-out infinite;
+    }
+    .sb-dot.green { background:var(--green); }
+    @keyframes pls { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.7)} }
+
+    /* ─── DATA STRIP ──────────────────────────── */
+    .datastrip {
+      position:fixed; top:88px; right:40px; z-index:15;
+      display:flex; flex-direction:column; gap:5px; pointer-events:none;
+    }
+    .ds { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--muted); opacity:.32; letter-spacing:2px; text-align:right; }
+
+    /* ═══════════════════════════════════════════ */
+    /* SCREEN — AGENT SELECTION                   */
+    /* ═══════════════════════════════════════════ */
+    #screen-select {
+      position:relative; z-index:10;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      min-height:100vh; padding:120px 40px 90px;
+      transition: opacity .45s ease, transform .45s ease;
+    }
+    #screen-select.leaving { opacity:0; transform:scale(.96); pointer-events:none; }
+
+    .sel-title { text-align:center; margin-bottom:56px; }
+    .sel-eyebrow {
+      font-family:'Share Tech Mono',monospace; font-size:11px;
+      letter-spacing:5px; color:var(--muted); margin-bottom:14px;
+    }
+    .sel-h1 {
+      font-family:'Orbitron',monospace; font-size:clamp(26px,4vw,46px);
+      font-weight:800; letter-spacing:6px; color:var(--text); margin-bottom:14px;
+    }
+    .sel-h1 em { color:var(--cyan); font-style:normal; text-shadow:0 0 28px rgba(0,212,255,.45); }
+    .sel-rule {
+      width:180px; height:1px; margin:0 auto;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    }
+
+    /* Cards */
+    .cards-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap:22px; max-width:980px; width:100%;
+    }
+
+    .acard {
+      position:relative;
+      background: rgba(8,18,34,.65);
+      border:1px solid rgba(0,212,255,.13);
+      border-radius:3px; padding:30px;
+      cursor:pointer; overflow:hidden;
+      backdrop-filter:blur(14px);
+      transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+    }
+    .acard::before { /* sweep shimmer */
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(120deg, transparent 35%, rgba(0,212,255,.04) 50%, transparent 65%);
+      transform:translateX(-100%); transition:transform .55s ease;
+    }
+    .acard:hover::before { transform:translateX(100%); }
+    .acard::after { /* top glow line */
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity:0; transition:opacity .3s ease;
+    }
+    .acard:hover::after { opacity:1; }
+    .acard:hover {
+      border-color: rgba(0,212,255,.45);
+      transform: translateY(-5px) perspective(700px) rotateX(0deg);
+      box-shadow: 0 24px 60px rgba(0,212,255,.08), 0 0 0 1px rgba(0,212,255,.04);
+    }
+
+    /* card bracket corners */
+    .cc { position:absolute; width:11px; height:11px; }
+    .cc.tl { top:9px;  left:9px;  border-top:1px solid rgba(0,212,255,.5); border-left:1px solid rgba(0,212,255,.5); }
+    .cc.tr { top:9px;  right:9px; border-top:1px solid rgba(0,212,255,.5); border-right:1px solid rgba(0,212,255,.5); }
+    .cc.bl { bottom:9px; left:9px;  border-bottom:1px solid rgba(0,212,255,.5); border-left:1px solid rgba(0,212,255,.5); }
+    .cc.br { bottom:9px; right:9px; border-bottom:1px solid rgba(0,212,255,.5); border-right:1px solid rgba(0,212,255,.5); }
+
+    .card-idx {
+      font-family:'Share Tech Mono',monospace; font-size:9px;
+      letter-spacing:3px; color:var(--cyan); opacity:.5; margin-bottom:18px;
+    }
+    .card-ava {
+      width:54px; height:54px; border-radius:50%;
+      border:1.5px solid rgba(0,212,255,.28);
+      background: rgba(0,212,255,.04);
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px; margin-bottom:18px; position:relative;
+    }
+    .card-ava::after {
+      content:''; position:absolute; inset:-5px; border-radius:50%;
+      border:1px solid rgba(0,212,255,.09);
+    }
+    .card-name {
+      font-family:'Orbitron',sans-serif; font-size:15px; font-weight:700;
+      letter-spacing:3px; margin-bottom:6px;
+    }
+    .card-role {
+      font-family:'Share Tech Mono',monospace; font-size:10px;
+      color:var(--cyan); letter-spacing:2px; opacity:.75; margin-bottom:15px;
+    }
+    .card-desc { font-size:13.5px; color:var(--muted); line-height:1.65; font-weight:400; }
+    .card-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:18px; }
+    .ctag {
+      font-family:'Share Tech Mono',monospace; font-size:8.5px;
+      letter-spacing:1.5px; color:var(--cyan);
+      border:1px solid rgba(0,212,255,.18); padding:3px 9px;
+      border-radius:2px; opacity:.65;
+    }
+    .card-cta {
+      display:flex; align-items:center; gap:7px; margin-top:22px;
+      font-family:'Share Tech Mono',monospace; font-size:10px;
+      color:var(--cyan); letter-spacing:3px;
+      opacity:0; transform:translateX(-8px);
+      transition:opacity .3s ease, transform .3s ease;
+    }
+    .acard:hover .card-cta { opacity:1; transform:translateX(0); }
+    .card-cta::after { content:'→'; }
+
+    /* ═══════════════════════════════════════════ */
+    /* SCREEN — CHAT                              */
+    /* ═══════════════════════════════════════════ */
+    #screen-chat {
+      position:fixed; inset:0; z-index:10;
+      display:flex; flex-direction:column;
+      opacity:0; pointer-events:none;
+      transition:opacity .45s ease;
+    }
+    #screen-chat.active { opacity:1; pointer-events:all; }
+
+    /* Chat Header */
+    .chat-hdr {
+      display:flex; align-items:center; gap:18px;
+      padding:14px 40px;
+      background:rgba(2,4,8,.85); backdrop-filter:blur(24px);
+      border-bottom:1px solid rgba(0,212,255,.09);
+      position:relative; z-index:20;
+    }
+    .back-btn {
+      font-family:'Share Tech Mono',monospace; font-size:10px;
+      color:var(--muted); letter-spacing:2px; cursor:pointer;
+      padding:7px 12px; border:1px solid transparent;
+      transition:all .2s ease; border-radius:2px;
+    }
+    .back-btn:hover { color:var(--cyan); border-color:rgba(0,212,255,.22); }
+
+    .ag-badge {
+      display:flex; align-items:center; gap:14px; flex:1;
+    }
+    .ag-ava {
+      width:38px; height:38px; border-radius:50%;
+      border:1.5px solid rgba(0,212,255,.35);
+      background:rgba(0,212,255,.04);
+      display:flex; align-items:center; justify-content:center;
+      font-size:17px; position:relative; flex-shrink:0;
+    }
+    .ag-ava .sdot {
+      position:absolute; bottom:0; right:0; width:9px; height:9px;
+      border-radius:50%; background:var(--green); border:1.5px solid var(--bg);
+      animation:pls 2s ease-in-out infinite;
+    }
+    .ag-name { font-family:'Orbitron',sans-serif; font-size:12px; font-weight:700; letter-spacing:2.5px; }
+    .ag-status { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--green); letter-spacing:2px; margin-top:1px; }
+
+    .chat-metrics { display:flex; gap:28px; margin-left:auto; }
+    .cm { text-align:right; }
+    .cm-val { font-family:'Share Tech Mono',monospace; font-size:15px; color:var(--cyan); }
+    .cm-lbl { font-family:'Share Tech Mono',monospace; font-size:8.5px; color:var(--muted); letter-spacing:2px; }
+
+    /* Messages */
+    .msgs {
+      flex:1; overflow-y:auto; padding:36px 40px;
+      display:flex; flex-direction:column; gap:22px;
+      scroll-behavior:smooth;
+    }
+    .msgs::-webkit-scrollbar { width:3px; }
+    .msgs::-webkit-scrollbar-thumb { background:rgba(0,212,255,.18); border-radius:2px; }
+
+    /* Welcome block */
+    .welcome {
+      display:flex; flex-direction:column; align-items:center;
+      text-align:center; padding:60px 20px;
+    }
+    .w-ava {
+      width:76px; height:76px; border-radius:50%;
+      border:2px solid rgba(0,212,255,.28);
+      background:rgba(0,212,255,.04);
+      display:flex; align-items:center; justify-content:center;
+      font-size:32px; margin-bottom:22px;
+      box-shadow:0 0 40px rgba(0,212,255,.1);
+      animation:float 4s ease-in-out infinite;
+    }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .w-title {
+      font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700;
+      letter-spacing:4px; margin-bottom:10px;
+    }
+    .w-desc { font-size:13.5px; color:var(--muted); line-height:1.7; max-width:480px; margin-bottom:28px; }
+    .qactions { display:flex; flex-wrap:wrap; gap:9px; justify-content:center; }
+    .qa-btn {
+      font-family:'Share Tech Mono',monospace; font-size:10.5px;
+      color:var(--cyan); border:1px solid rgba(0,212,255,.22);
+      padding:8px 16px; border-radius:2px; cursor:pointer;
+      letter-spacing:1px; background:rgba(0,212,255,.03);
+      transition:all .2s ease;
+    }
+    .qa-btn:hover {
+      background:rgba(0,212,255,.09); border-color:rgba(0,212,255,.5);
+      box-shadow:0 0 18px rgba(0,212,255,.1);
+    }
+
+    /* Message bubble */
+    .msg {
+      display:flex; gap:14px; max-width:820px;
+      animation:msgIn .3s ease forwards;
+    }
+    @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .msg.user { margin-left:auto; flex-direction:row-reverse; }
+
+    .m-ava {
+      width:34px; height:34px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:15px;
+      border:1px solid rgba(0,212,255,.18); background:rgba(0,212,255,.04);
+    }
+    .msg.user .m-ava { border-color:rgba(255,107,0,.25); background:rgba(255,107,0,.04); }
+
+    .m-body { flex:1; }
+    .m-meta { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
+    .msg.user .m-meta { flex-direction:row-reverse; }
+    .m-who { font-family:'Share Tech Mono',monospace; font-size:9.5px; letter-spacing:2px; color:var(--cyan); }
+    .msg.user .m-who { color: var(--orange); }
+    .m-time { font-family:'Share Tech Mono',monospace; font-size:8.5px; color:var(--muted); opacity:.45; letter-spacing:1px; }
+
+    .m-bubble {
+      background:rgba(8,18,34,.85); border:1px solid rgba(0,212,255,.1);
+      border-radius:3px 14px 14px 14px; padding:14px 18px;
+      font-size:14px; color:var(--text); line-height:1.72; font-weight:400;
+      position:relative; backdrop-filter:blur(8px);
+    }
+    .msg.user .m-bubble {
+      background:rgba(255,107,0,.055); border-color:rgba(255,107,0,.14);
+      border-radius:14px 3px 14px 14px;
+    }
+    .m-bubble::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px; border-radius:3px;
+      background:linear-gradient(90deg, var(--cyan), transparent); opacity:.25;
+    }
+    .msg.user .m-bubble::before { background:linear-gradient(90deg, var(--orange), transparent); opacity:.2; }
+
+    /* Typing */
+    .typing { display:flex; gap:14px; align-items:flex-start; }
+    .tdots {
+      display:flex; gap:5px; align-items:center;
+      padding:14px 18px; background:rgba(8,18,34,.85);
+      border:1px solid rgba(0,212,255,.1);
+      border-radius:3px 14px 14px 14px;
+    }
+    .td {
+      width:6px; height:6px; border-radius:50%; background:var(--cyan);
+      animation:tb 1.4s ease-in-out infinite;
+    }
+    .td:nth-child(2){animation-delay:.2s} .td:nth-child(3){animation-delay:.4s}
+    @keyframes tb { 0%,60%,100%{transform:translateY(0);opacity:.35} 30%{transform:translateY(-7px);opacity:1} }
+
+    /* Input */
+    .input-zone {
+      padding:20px 40px 24px;
+      background:rgba(2,4,8,.9); backdrop-filter:blur(20px);
+      border-top:1px solid rgba(0,212,255,.07);
+    }
+    .iw {
+      display:flex; align-items:flex-end; gap:14px;
+      background:rgba(8,18,34,.85); border:1px solid rgba(0,212,255,.14);
+      border-radius:5px; padding:14px 18px;
+      transition: border-color .3s, box-shadow .3s;
+      position:relative;
+    }
+    .iw::before {
+      content:''; position:absolute; top:0; left:24px; right:24px; height:1px;
+      background:linear-gradient(90deg, transparent, rgba(0,212,255,.28), transparent);
+    }
+    .iw:focus-within {
+      border-color:rgba(0,212,255,.38);
+      box-shadow:0 0 28px rgba(0,212,255,.07), inset 0 0 28px rgba(0,212,255,.015);
+    }
+    #chat-input {
+      flex:1; background:transparent; border:none; outline:none;
+      color:var(--text); font-family:'Rajdhani',sans-serif;
+      font-size:15px; font-weight:400; line-height:1.6;
+      resize:none; min-height:24px; max-height:130px;
+      letter-spacing:.3px;
+    }
+    #chat-input::placeholder { color:var(--muted); opacity:.38; }
+    .send-btn {
+      width:38px; height:38px; border:1px solid rgba(0,212,255,.28);
+      border-radius:3px; background:rgba(0,212,255,.04); color:var(--cyan);
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:all .2s ease; flex-shrink:0;
+    }
+    .send-btn:hover { background:rgba(0,212,255,.14); border-color:var(--cyan); box-shadow:0 0 18px rgba(0,212,255,.18); }
+    .send-btn svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:2; }
+    .ihint { display:flex; justify-content:space-between; margin-top:9px; padding:0 3px; }
+    .ihint span { font-family:'Share Tech Mono',monospace; font-size:8.5px; color:var(--muted); opacity:.35; letter-spacing:1px; }
+
+    /* ─── RESPONSIVE ──────────────────────────── */
+    @media(max-width:768px){
+      .cards-grid{grid-template-columns:1fr}
+      .chat-hdr{padding:12px 18px} .msgs{padding:20px 18px}
+      .input-zone{padding:14px 18px 18px} .chat-metrics{display:none}
+      header{padding:14px 20px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div id="cur-ring"></div>
+<div id="cur-dot"></div>
+<div id="cur-aura"></div>
+
+<!-- BACKGROUND -->
+<canvas id="bg-canvas"></canvas>
+<div class="grid"></div>
+<div class="scan"></div>
+
+<!-- HUD -->
+<div class="hc tl"></div><div class="hc tr"></div>
+<div class="hc bl"></div><div class="hc br"></div>
+
+<!-- ARC REACTOR -->
+<div class="arc">
+  <div class="ring r1"></div><div class="ring r2"></div>
+  <div class="ring r3"></div><div class="ring r4"></div>
+  <div class="ring r5"></div><div class="core"></div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">NEXUS<sub>COPY INTELLIGENCE SYSTEM v2.4</sub></div>
+  <div class="hud-info" id="hud-right">
+    <span id="hud-time">--:--:--</span><br>
+    <span class="live" id="hud-session">SESSION: --------</span>
+  </div>
+</header>
+
+<!-- DATA STRIP -->
+<div class="datastrip">
+  <div class="ds" id="ds-time">SYS.CLOCK: --:--:--</div>
+  <div class="ds">NODE.STATUS: ONLINE</div>
+  <div class="ds">GROQ.API: CONNECTED</div>
+  <div class="ds">LATENCY: 42MS</div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="sb-item"><div class="sb-dot green"></div>SISTEMA OPERACIONAL</div>
+  <div class="sb-item"><div class="sb-dot"></div>3 AGENTES DISPONÍVEIS</div>
+  <div class="sb-item"><div class="sb-dot"></div>MODELO: GROQ / LLAMA-3.3</div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- SCREEN 1 — AGENT SELECTION        -->
+<!-- ═══════════════════════════════════ -->
+<div id="screen-select">
+  <div class="sel-title">
+    <p class="sel-eyebrow">NEXUS OS // INICIALIZAR PROTOCOLO DE COPY</p>
+    <div class="sel-rule" style="margin-bottom:16px"></div>
+    <h1 class="sel-h1">SELECIONE SEU <em>AGENTE</em></h1>
+    <div class="sel-rule" style="margin-top:16px"></div>
+  </div>
+
+  <div class="cards-grid">
+
+    <!-- UNIT 001 -->
+    <div class="acard" onclick="selectAgent({
+      id:'NEXUS-1', name:'Copy de Reels', emoji:'🎬',
+      role:'COPY.ENGINE — REELS SPECIALIST',
+      desc:'Especialista em roteiros de reels de alta conversão. Hooks irresistíveis, narrativa magnética e CTAs que convertem em frio.',
+      tags:['HOOKS','ROTEIROS','REELS','VIRAL'],
+      quick:['Criar roteiro completo','Melhorar meu hook','Gerar 5 opções de CTA','Adaptar para o nicho']
+    })">
+      <div class="cc tl"></div><div class="cc tr"></div>
+      <div class="cc bl"></div><div class="cc br"></div>
+      <div class="card-idx">UNIT // 001</div>
+      <div class="card-ava">🎬</div>
+      <div class="card-name">NEXUS-1</div>
+      <div class="card-role">COPY.ENGINE — REELS SPECIALIST</div>
+      <div class="card-desc">Especialista em roteiros de reels de alta conversão. Hooks irresistíveis, narrativa magnética e CTAs que convertem em frio.</div>
+      <div class="card-tags">
+        <span class="ctag">HOOKS</span><span class="ctag">ROTEIROS</span>
+        <span class="ctag">REELS</span><span class="ctag">VIRAL</span>
+      </div>
+      <div class="card-cta">ATIVAR UNIDADE</div>
+    </div>
+
+    <!-- UNIT 002 -->
+    <div class="acard" onclick="selectAgent({
+      id:'NEXUS-2', name:'Estratégia de Conteúdo', emoji:'📡',
+      role:'STRATEGY.CORE — CONTENT ARCHITECT',
+      desc:'Planejamento estratégico, análise de concorrência e posicionamento de marca para crescimento acelerado no orgânico.',
+      tags:['ESTRATÉGIA','CALENDÁRIO','POSICIONAMENTO','ANÁLISE'],
+      quick:['Criar calendário mensal','Analisar concorrência','Definir posicionamento','Planejar série de conteúdo']
+    })">
+      <div class="cc tl"></div><div class="cc tr"></div>
+      <div class="cc bl"></div><div class="cc br"></div>
+      <div class="card-idx">UNIT // 002</div>
+      <div class="card-ava">📡</div>
+      <div class="card-name">NEXUS-2</div>
+      <div class="card-role">STRATEGY.CORE — CONTENT ARCHITECT</div>
+      <div class="card-desc">Planejamento estratégico, análise de concorrência e posicionamento de marca para crescimento acelerado no orgânico.</div>
+      <div class="card-tags">
+        <span class="ctag">ESTRATÉGIA</span><span class="ctag">CALENDÁRIO</span>
+        <span class="ctag">POSICIONAMENTO</span><span class="ctag">ANÁLISE</span>
+      </div>
+      <div class="card-cta">ATIVAR UNIDADE</div>
+    </div>
+
+    <!-- UNIT 003 -->
+    <div class="acard" onclick="selectAgent({
+      id:'NEXUS-3', name:'Editor de Roteiros', emoji:'✍️',
+      role:'REFINE.ENGINE — SCRIPT EDITOR',
+      desc:'Refinamento cirúrgico de roteiros existentes. Aumenta impacto emocional, elimina fricção e maximiza cada segundo do vídeo.',
+      tags:['EDIÇÃO','REFINAMENTO','IMPACTO','CLAREZA'],
+      quick:['Revisar meu roteiro','Aumentar impacto emocional','Encurtar sem perder essência','Fortalecer abertura']
+    })">
+      <div class="cc tl"></div><div class="cc tr"></div>
+      <div class="cc bl"></div><div class="cc br"></div>
+      <div class="card-idx">UNIT // 003</div>
+      <div class="card-ava">✍️</div>
+      <div class="card-name">NEXUS-3</div>
+      <div class="card-role">REFINE.ENGINE — SCRIPT EDITOR</div>
+      <div class="card-desc">Refinamento cirúrgico de roteiros existentes. Aumenta impacto emocional, elimina fricção e maximiza cada segundo do vídeo.</div>
+      <div class="card-tags">
+        <span class="ctag">EDIÇÃO</span><span class="ctag">REFINAMENTO</span>
+        <span class="ctag">IMPACTO</span><span class="ctag">CLAREZA</span>
+      </div>
+      <div class="card-cta">ATIVAR UNIDADE</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- SCREEN 2 — CHAT                   -->
+<!-- ═══════════════════════════════════ -->
+<div id="screen-chat">
+
+  <div class="chat-hdr">
+    <div class="back-btn" onclick="goBack()">← VOLTAR</div>
+    <div class="ag-badge">
+      <div class="ag-ava"><span id="hdr-emoji">🎬</span><div class="sdot"></div></div>
+      <div>
+        <div class="ag-name" id="hdr-name">NEXUS-1</div>
+        <div class="ag-status">● ONLINE — PROCESSAMENTO ATIVO</div>
+      </div>
+    </div>
+    <div class="chat-metrics">
+      <div class="cm"><div class="cm-val" id="cnt-msgs">0</div><div class="cm-lbl">MENSAGENS</div></div>
+      <div class="cm"><div class="cm-val" id="cnt-tok">0</div><div class="cm-lbl">TOKENS EST.</div></div>
+    </div>
+  </div>
+
+  <div class="msgs" id="msgs-area">
+    <div class="welcome" id="welcome-block">
+      <div class="w-ava" id="w-emoji">🎬</div>
+      <div class="w-title" id="w-title">NEXUS-1 ONLINE</div>
+      <div class="w-desc" id="w-desc">Pronto para criar roteiros de alta conversão.</div>
+      <div class="qactions" id="qactions"></div>
+    </div>
+  </div>
+
+  <div class="input-zone">
+    <div class="iw">
+      <textarea id="chat-input"
+        placeholder="Digite sua solicitação para o agente..."
+        rows="1"
+        onkeydown="handleKey(event)"
+        oninput="onInput(this)"></textarea>
+      <button class="send-btn" onclick="sendMsg()">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="ihint">
+      <span>ENTER → ENVIAR // SHIFT+ENTER → NOVA LINHA</span>
+      <span id="char-cnt">0 CHARS</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ════════════════════════════════════════
+   CURSOR
+════════════════════════════════════════ */
+const ring = document.getElementById('cur-ring');
+const dot  = document.getElementById('cur-dot');
+const aura = document.getElementById('cur-aura');
+let mx=0,my=0, rx=0,ry=0;
+
+document.addEventListener('mousemove', e=>{
+  mx=e.clientX; my=e.clientY;
+  dot.style.cssText  += `;left:${mx}px;top:${my}px`;
+  aura.style.cssText += `;left:${mx}px;top:${my}px`;
+});
+document.addEventListener('mousedown', ()=>{ ring.style.transform='translate(-50%,-50%) scale(.65)'; });
+document.addEventListener('mouseup',   ()=>{ ring.style.transform='translate(-50%,-50%) scale(1)'; });
+
+(function cursorLoop(){
+  rx += (mx-rx)*.14; ry += (my-ry)*.14;
+  ring.style.left = rx+'px'; ring.style.top = ry+'px';
+  requestAnimationFrame(cursorLoop);
+})();
+
+/* ════════════════════════════════════════
+   CANVAS PARTICLES
+════════════════════════════════════════ */
+const cv = document.getElementById('bg-canvas');
+const cx = cv.getContext('2d');
+let pts = [];
+
+function resize(){ cv.width=innerWidth; cv.height=innerHeight; }
+resize(); addEventListener('resize', resize);
+
+class P {
+  constructor(){ this.reset(true); }
+  reset(init){
+    this.x  = Math.random()*cv.width;
+    this.y  = init ? Math.random()*cv.height : (Math.random()<.5?-4:cv.height+4);
+    this.vx = (Math.random()-.5)*.28;
+    this.vy = (Math.random()-.5)*.28;
+    this.r  = Math.random()*1.2+.3;
+    this.a  = Math.random()*.35+.08;
+    this.ph = Math.random()*Math.PI*2;
+  }
+  step(){
+    this.x+=this.vx; this.y+=this.vy; this.ph+=.018;
+    if(this.x<-8||this.x>cv.width+8||this.y<-8||this.y>cv.height+8) this.reset();
+  }
+  draw(){
+    const a = this.a*(.65+.35*Math.sin(this.ph));
+    cx.beginPath(); cx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    cx.fillStyle=`rgba(0,212,255,${a})`; cx.fill();
+  }
+}
+for(let i=0;i<90;i++) pts.push(new P());
+
+function drawLines(){
+  for(let i=0;i<pts.length;i++){
+    for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y;
+      const d=Math.hypot(dx,dy);
+      if(d<110){
+        cx.beginPath(); cx.moveTo(pts[i].x,pts[i].y); cx.lineTo(pts[j].x,pts[j].y);
+        cx.strokeStyle=`rgba(0,212,255,${(1-d/110)*.07})`; cx.lineWidth=.5; cx.stroke();
+      }
+    }
+  }
+}
+
+(function loop(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  pts.forEach(p=>{ p.step(); p.draw(); });
+  drawLines();
+  requestAnimationFrame(loop);
+})();
+
+/* ════════════════════════════════════════
+   HUD CLOCK
+════════════════════════════════════════ */
+const sid = Array.from({length:8},()=>Math.floor(Math.random()*16).toString(16).toUpperCase()).join('');
+document.getElementById('hud-session').textContent = 'SID: '+sid;
+(function clock(){
+  const n=new Date();
+  const t=[n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
+  document.getElementById('hud-time').textContent=t;
+  document.getElementById('ds-time').textContent='SYS.CLOCK: '+t;
+  setTimeout(clock,1000);
+})();
+
+/* ════════════════════════════════════════
+   3D CARD TILT
+════════════════════════════════════════ */
+document.querySelectorAll('.acard').forEach(c=>{
+  c.addEventListener('mousemove',e=>{
+    const r=c.getBoundingClientRect();
+    const dx=((e.clientX-r.left)/r.width-.5)*2;
+    const dy=((e.clientY-r.top)/r.height-.5)*2;
+    c.style.transform=`translateY(-5px) perspective(650px) rotateX(${-dy*4}deg) rotateY(${dx*4}deg)`;
+  });
+  c.addEventListener('mouseleave',()=>{ c.style.transform=''; });
+});
+
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
+let agent = null;
+let msgCount = 0, tokCount = 0;
+
+/* ════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════ */
+function selectAgent(ag){
+  agent = ag;
+
+  // Update chat header
+  document.getElementById('hdr-emoji').textContent = ag.emoji;
+  document.getElementById('hdr-name').textContent  = ag.id;
+
+  // Update welcome
+  document.getElementById('w-emoji').textContent = ag.emoji;
+  document.getElementById('w-title').textContent = ag.id + ' ONLINE';
+  document.getElementById('w-desc').textContent  = ag.desc;
+
+  // Quick actions
+  const qa = document.getElementById('qactions');
+  qa.innerHTML = ag.quick.map(q=>`<div class="qa-btn" onclick="quickSend(this)">${q}</div>`).join('');
+
+  // Reset metrics
+  msgCount=0; tokCount=0; updateMetrics();
+
+  // Transition
+  const ss = document.getElementById('screen-select');
+  ss.classList.add('leaving');
+  setTimeout(()=>{
+    ss.style.display='none';
+    document.getElementById('screen-chat').classList.add('active');
+    document.getElementById('chat-input').focus();
+  },450);
+}
+
+function goBack(){
+  document.getElementById('screen-chat').classList.remove('active');
+  const ss = document.getElementById('screen-select');
+  ss.style.display='flex';
+  setTimeout(()=>ss.classList.remove('leaving'), 20);
+
+  // Clear msgs except welcome
+  const area = document.getElementById('msgs-area');
+  while(area.children.length > 1) area.removeChild(area.lastChild);
+  document.getElementById('welcome-block').style.display='flex';
+
+  agent=null; msgCount=0; tokCount=0;
+}
+
+function updateMetrics(){
+  document.getElementById('cnt-msgs').textContent = msgCount;
+  document.getElementById('cnt-tok').textContent  = tokCount;
+}
+
+/* ════════════════════════════════════════
+   CHAT
+════════════════════════════════════════ */
+function quickSend(el){ document.getElementById('chat-input').value=el.textContent; sendMsg(); }
+
+function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMsg(); } }
+
+function onInput(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,130)+'px';
+  document.getElementById('char-cnt').textContent=el.value.length+' CHARS';
+}
+
+const REPLIES = {
+  'NEXUS-1':[
+    `**ROTEIRO GERADO // ALTA CONVERSÃO**\n\n**[0-3s] HOOK:**\n"Você está perdendo dinheiro toda vez que posta sem esse método..."\n\n**[3-15s] DESENVOLVIMENTO:**\nMostra os 3 erros que copywriters cometem em reels — sem perceber que estão matando o engajamento nos primeiros 3 segundos.\n\n**[15-25s] VIRADA:**\nRevela o framework de 7 segundos que transforma qualquer script em conteúdo irresistível.\n\n**[25-30s] CTA:**\n"Salva esse vídeo — você vai precisar na próxima vez que sentar pra escrever."`,
+    `**ANÁLISE DO HOOK // RESULTADO:**\n\nSeu hook perde atenção no segundo 1.2. Velocidade de impacto baixa.\n\n**Versão otimizada:**\n→ Abre com tensão imediata — sem introdução\n→ Pausa dramática no segundo 2\n→ Promessa clara antes do segundo 3\n\n5 variações geradas:\n1. "Isso vai parecer óbvio depois que eu mostrar..."\n2. "Errei por 2 anos até descobrir isso"\n3. "Ninguém fala sobre esse detalhe"\n4. "Se você ainda faz isso, para agora"\n5. "A pergunta que eu deveria ter feito antes"`,
+    `**CTAs DE ALTA CONVERSÃO // GERADOS:**\n\n1. "Comenta **QUERO** que eu te mando o template"\n2. "Salva antes que eu delete — esse converte demais"\n3. "Segue pra não perder a parte 2"\n4. "Manda pra quem ainda escreve roteiro no improviso"\n5. "Link na bio — aplica isso hoje mesmo"`,
+  ],
+  'NEXUS-2':[
+    `**CALENDÁRIO // SEMANA MODELO:**\n\nSeg: Hook de dor + problema do nicho\nTer: Bastidores / processo criativo\nQua: Tutorial rápido (máx. 60s)\nQui: Prova social / resultado de cliente\nSex: Trend adaptada ao nicho\nSab: Conteúdo de valor puro sem CTA\n\nFormato ideal: 4 Reels + 2 Stories/dia + 1 Carrossel semanal.`,
+    `**ANÁLISE ESTRATÉGICA:**\n\nPositioning atual está genérico demais para o algoritmo identificar e distribuir.\n\nReestruturação:\n→ Nicho: Copywriting para infoprodutos B2C\n→ Promessa única: "Roteiro em 20 minutos"\n→ Tom: Direto, sem enrolação, prático\n→ Frequência ideal: 5×/semana nos primeiros 90 dias`,
+  ],
+  'NEXUS-3':[
+    `**ROTEIRO REVISADO // +47% IMPACTO ESTIMADO:**\n\nIdentifiquei 3 pontos de fricção:\n\n❌ Linha 2: muito longa — quebre em 2 falas\n❌ Transição 0:12: sem gancho para próxima cena\n❌ CTA final: fraco — não cria urgência real\n\n**Versão reescrita pronta. Quer que eu aplique?**`,
+    `**ANÁLISE EMOCIONAL:**\n\nRoteiro pontua 6.2/10 em impacto emocional.\n\nGap principal: falta tensão narrativa entre o problema e a solução.\n\nRecomendação: adicione uma "virada inesperada" entre os segundos 12-15 — é onde o rewatch rate dispara no algoritmo.`,
+  ],
+};
+
+async function sendMsg(){
+  const inp = document.getElementById('chat-input');
+  const txt = inp.value.trim();
+  if(!txt||!agent) return;
+
+  document.getElementById('welcome-block').style.display='none';
+  addMsg(txt,'user');
+
+  inp.value=''; inp.style.height='auto';
+  document.getElementById('char-cnt').textContent='0 CHARS';
+
+  msgCount++; tokCount+=Math.ceil(txt.length/4); updateMetrics();
+
+  const typing = showTyping();
+  await sleep(1100+Math.random()*900);
+  typing.remove();
+
+  const pool = REPLIES[agent.id]||REPLIES['NEXUS-1'];
+  const reply = pool[Math.floor(Math.random()*pool.length)];
+  addMsg(reply,'agent');
+
+  msgCount++; tokCount+=Math.ceil(reply.length/4); updateMetrics();
+}
+
+function addMsg(text,type){
+  const area = document.getElementById('msgs-area');
+  const isUser = type==='user';
+  const time = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  const d = document.createElement('div');
+  d.className = 'msg '+(isUser?'user':'agent');
+
+  const html = text
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\n/g,'<br>')
+    .replace(/→/g,`<span style="color:var(--cyan)">→</span>`)
+    .replace(/❌/g,`<span style="color:#ff4455">❌</span>`);
+
+  d.innerHTML=`
+    <div class="m-ava">${isUser?'👤':agent.emoji}</div>
+    <div class="m-body">
+      <div class="m-meta">
+        <span class="m-who">${isUser?'OPERADOR':agent.id}</span>
+        <span class="m-time">${time}</span>
+      </div>
+      <div class="m-bubble">${html}</div>
+    </div>`;
+
+  area.appendChild(d);
+  area.scrollTop = area.scrollHeight;
+}
+
+function showTyping(){
+  const area = document.getElementById('msgs-area');
+  const d = document.createElement('div');
+  d.className='typing';
+  d.innerHTML=`<div class="m-ava">${agent.emoji}</div><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  area.appendChild(d);
+  area.scrollTop = area.scrollHeight;
+  return d;
+}
+
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+</script>
+</body>
+</html>
