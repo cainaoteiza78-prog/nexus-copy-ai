@@ -150,7 +150,9 @@ header{position:fixed;top:0;left:0;right:0;z-index:20;padding:15px 44px;display:
 .ra{width:26px;height:26px;border-radius:50%;border:1px solid rgba(128,156,171,.18);background:rgba(128,156,171,.04);display:flex;align-items:center;justify-content:center;font-size:11px;position:relative;transition:all .2s ease}
 .ra.act{border-color:var(--acc);box-shadow:0 0 10px rgba(128,156,171,.2);transform:scale(1.12)}
 .ra:hover::after{content:attr(data-n);position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:rgba(3,0,10,.95);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;padding:3px 7px;border-radius:2px;white-space:nowrap;border:1px solid var(--border);pointer-events:none;z-index:10}
-.hm{text-align:right;margin-left:14px;flex-shrink:0}
+.hnc{width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);background:var(--glass);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--acc);cursor:pointer;transition:all .25s ease;margin-left:8px;flex-shrink:0}
+.hnc:hover{background:rgba(128,156,171,.15);border-color:var(--acc);box-shadow:0 0 14px rgba(128,156,171,.12);transform:rotate(90deg)}
+.hm{text-align:right;margin-left:8px;flex-shrink:0}
 .hmv{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--acc)}
 .hml{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text2);letter-spacing:2px}
 
@@ -412,6 +414,7 @@ header{position:fixed;top:0;left:0;right:0;z-index:20;padding:15px 44px;display:
       <div class="ra" data-n="ALEX (HORMOZI)">💰</div>
       <div class="ra" data-n="ÍCARO (DE CARVALHO)">🇧🇷</div>
     </div>
+    <div class="hnc" onclick="newChat()" title="Nova conversa">✦</div>
     <div class="hm"><div class="hmv" id="mc">0</div><div class="hml">MSGS</div></div>
   </div>
   <div class="msgs" id="ma">
@@ -578,10 +581,15 @@ function back(){
   card.classList.remove('wake','blaze');cfs.textContent='SISTEMA STANDBY';
   const a=document.getElementById('ma');while(a.children.length>1)a.removeChild(a.lastChild);
   document.getElementById('wb').style.display='flex';mn=0;um();
+  hist=[];saveHist();ri=0;
 }
 
-/* CHAT */
-let mn=0,ri=0;
+/* CHAT + HISTORY */
+const STORE_KEY='cf-chat-history';
+let mn=0,ri=0,hist=[];
+
+function saveHist(){try{localStorage.setItem(STORE_KEY,JSON.stringify(hist))}catch(e){}}
+function loadHist(){try{const d=localStorage.getItem(STORE_KEY);return d?JSON.parse(d):[]}catch(e){return[]}}
 
 const WEL=`Eduardo! Chegou a hora de criar. 🎯\n\nSquad completo, todos atualizados sobre o Leo e o projeto:\n\n🎯 **AXIOM** — Eu. Estratégia de conteúdo e orquestração.\n📰 **DAVID** (Ogilvy) — Hooks irresistíveis e posicionamento de autoridade.\n✉️ **GARY** (Halbert) — Storytelling direto que gera identificação.\n🧠 **EUGENE** (Schwartz) — Calibragem de audiência por etapa do funil.\n🎬 **RUSSELL** (Brunson) — Estrutura de reel e narrativa em vídeo.\n⏰ **DAN** (Kennedy) — Autoridade, conteúdo que move e posiciona.\n⚡ **JOHN** (Carlton) — Linguagem afiada, problema/solução sem rodeio.\n💰 **ALEX** (Hormozi) — Conteúdo denso de valor, lógica imbatível.\n🇧🇷 **ÍCARO** (de Carvalho) — Tom brasileiro de verdade, zero falsidade.\n\nSó me diz: qual reel do Leo a gente cria agora?`;
 
@@ -599,14 +607,47 @@ const POOL=[
 ];
 
 function setA(i){document.querySelectorAll('.ra').forEach((r,j)=>r.classList.toggle('act',j===i))}
-function addM(t,ty,e,w){
+
+function renderM(t,e,w,u){
+  const h=t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>').replace(/↑/g,'<span style="color:var(--green)">↑</span>').replace(/↓/g,'<span style="color:var(--red)">↓</span>').replace(/✗/g,'<span style="color:var(--red)">✗</span>').replace(/✓/g,'<span style="color:var(--green)">✓</span>');
+  return `<div class="mav">${e}</div><div class="mbd"><div class="mmt"><span class="mw">${w}</span><span class="mtm">${u.tm}</span></div><div class="mb">${h}</div></div>`;
+}
+
+function addM(t,ty,e,w,skip){
   const a=document.getElementById('ma'),u=ty==='u';
   const tm=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   const d=document.createElement('div');d.className='msg'+(u?' u':'');
-  const h=t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>').replace(/↑/g,'<span style="color:var(--green)">↑</span>').replace(/↓/g,'<span style="color:var(--red)">↓</span>').replace(/✗/g,'<span style="color:var(--red)">✗</span>').replace(/✓/g,'<span style="color:var(--green)">✓</span>');
-  d.innerHTML=`<div class="mav">${e}</div><div class="mbd"><div class="mmt"><span class="mw">${w}</span><span class="mtm">${tm}</span></div><div class="mb">${h}</div></div>`;
+  d.innerHTML=renderM(t,e,w,{tm});
   a.appendChild(d);a.scrollTop=a.scrollHeight;
+  if(!skip){hist.push({t,ty,e,w,tm,ts:Date.now()});saveHist()}
 }
+
+function restoreHist(){
+  const saved=loadHist();
+  if(!saved.length)return false;
+  hist=saved;
+  const a=document.getElementById('ma');
+  saved.forEach(m=>{
+    const d=document.createElement('div');d.className='msg'+(m.ty==='u'?' u':'');
+    d.innerHTML=renderM(m.t,m.e,m.w,{tm:m.tm});
+    a.appendChild(d);
+  });
+  mn=saved.length;um();
+  a.scrollTop=a.scrollHeight;
+  return true;
+}
+
+function newChat(){
+  if(!hist.length)return;
+  if(!confirm('Iniciar nova conversa? O histórico atual será apagado.'))return;
+  hist=[];saveHist();
+  const a=document.getElementById('ma');
+  while(a.children.length>1)a.removeChild(a.lastChild);
+  document.getElementById('wb').style.display='flex';
+  mn=0;um();ri=0;
+  addM(WEL,'a','🎯','AXIOM');setA(0);
+}
+
 function sTyp(){const a=document.getElementById('ma'),d=document.createElement('div');d.className='typ';d.innerHTML='<div class="mav">⚡</div><div class="tds"><div class="td"></div><div class="td"></div><div class="td"></div></div>';a.appendChild(d);a.scrollTop=a.scrollHeight;return d}
 function um(){document.getElementById('mc').textContent=mn}
 
@@ -621,6 +662,18 @@ async function send(){
 function qs(el){document.getElementById('ci').value=el.textContent;send()}
 function hk(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
 function oi(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';document.getElementById('cc').textContent=el.value.length}
+
+/* AUTO-RESTORE: skip boot if history exists */
+(function(){
+  const saved=loadHist();
+  if(saved.length){
+    document.getElementById('s1').style.display='none';
+    document.getElementById('s1').classList.add('out');
+    document.getElementById('wb').style.display='none';
+    document.getElementById('s2').classList.add('on');
+    restoreHist();
+  }
+})()
 </script>
 </body>
 </html>
