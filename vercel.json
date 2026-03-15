@@ -4,6 +4,7 @@
   "outputDirectory": ".",
   "framework": null,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/form", "destination": "/form.html" },
+    { "source": "/((?!form).*)", "destination": "/index.html" }
   ]
 }
