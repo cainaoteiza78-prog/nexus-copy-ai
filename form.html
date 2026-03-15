@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MATHEUS — Base de Conhecimento</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{--bg:#03000A;--bg2:#060310;--acc:#809CAB;--acc2:#5B7A8C;--acc3:#B8D4E0;--text:#F0EEF8;--text2:#9B97B2;--border:rgba(128,156,171,.12);--border2:rgba(128,156,171,.22);--glass:rgba(128,156,171,.055);--green:#4ECDC4;--red:#FF6B6B;--panel:rgba(6,3,16,.85)}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -141,6 +142,35 @@ textarea.xtall{min-height:170px}
 /* REQUIRED NOTICE */
 .req-note{font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:1.5px;color:var(--text2);opacity:.45;text-align:right;margin-bottom:32px}
 .req-note span{color:var(--red)}
+
+/* FILE UPLOAD */
+.upload-zone{border:1px dashed rgba(128,156,171,.3);border-radius:4px;padding:36px 24px;text-align:center;cursor:pointer;transition:all .25s ease;background:rgba(8,5,20,.6);position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--acc);background:rgba(128,156,171,.05);box-shadow:0 0 24px rgba(128,156,171,.06)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.uz-icon{font-size:28px;margin-bottom:10px;opacity:.5}
+.uz-title{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--acc);margin-bottom:6px}
+.uz-sub{font-size:12px;color:var(--text2);opacity:.5;line-height:1.6}
+.uz-types{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--text2);opacity:.35;margin-top:8px}
+
+.file-list{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.file-item{background:rgba(8,5,20,.9);border:1px solid var(--border);border-radius:3px;padding:12px 16px;display:flex;align-items:flex-start;gap:12px;animation:mi .3s ease forwards}
+.fi-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.fi-body{flex:1;min-width:0}
+.fi-name{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--acc3);margin-bottom:4px;word-break:break-all}
+.fi-meta{font-size:11px;color:var(--text2);opacity:.5;margin-bottom:6px}
+.fi-preview{font-size:11.5px;color:var(--text2);line-height:1.65;max-height:80px;overflow:hidden;position:relative}
+.fi-preview.expanded{max-height:none}
+.fi-preview::after{content:'';position:absolute;bottom:0;left:0;right:0;height:24px;background:linear-gradient(transparent,rgba(6,3,16,.95));pointer-events:none}
+.fi-preview.expanded::after{display:none}
+.fi-actions{display:flex;gap:10px;margin-top:8px}
+.fi-expand{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;color:var(--acc);cursor:pointer;opacity:.6;transition:opacity .2s;background:none;border:none;padding:0}
+.fi-expand:hover{opacity:1}
+.fi-remove{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;color:var(--text2);cursor:pointer;opacity:.4;transition:all .2s;background:none;border:none;padding:0}
+.fi-remove:hover{color:var(--red);opacity:.9}
+.fi-status{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;margin-bottom:4px}
+.fi-status.ok{color:var(--green)}
+.fi-status.err{color:var(--red)}
+.fi-status.loading{color:var(--text2);opacity:.6}
 
 /* MOBILE */
 @media(max-width:768px){
@@ -896,6 +926,27 @@ textarea.xtall{min-height:170px}
 
   </div>
 
+  <!-- ===== SEÇÃO 11: ARQUIVOS E DOCUMENTOS ===== -->
+  <div class="sec" id="sec11">
+    <div class="sec-hdr">
+      <span class="sec-num">11 / 11</span>
+      <span class="sec-title">Arquivos e Documentos</span>
+      <span class="sec-desc">MATERIAIS DE REFERÊNCIA</span>
+    </div>
+
+    <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:24px;opacity:.7">Anexe qualquer documento relevante — descrição do funil, briefings, guias de tom de voz, planilhas de resultados, roteiros anteriores. O conteúdo será extraído e incluído automaticamente na base de conhecimento exportada.</p>
+
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" multiple accept=".txt,.md,.csv,.pdf,.doc,.docx,.json,.rtf" onchange="handleFiles(this.files)">
+      <div class="uz-icon">📎</div>
+      <div class="uz-title">SOLTAR ARQUIVOS AQUI</div>
+      <div class="uz-sub">ou clique para selecionar</div>
+      <div class="uz-types">TXT · MD · PDF · CSV · JSON · RTF</div>
+    </div>
+
+    <div class="file-list" id="file-list"></div>
+  </div>
+
   </form>
 </div>
 
@@ -1127,6 +1178,18 @@ function exportKB(){
   L('O que os reels nunca devem fazer',getVal('o_avoid'));
   L('Informações adicionais',getVal('o_extra'));
 
+  if(attachedFiles.length){
+    H('11. ARQUIVOS ANEXADOS');
+    attachedFiles.forEach((f,i)=>{
+      lines.push(`ARQUIVO ${String(i+1).padStart(2,'0')}: ${f.name} (${fmtSize(f.size)})`);
+      if(f.content&&f.status!=='err'){
+        lines.push('CONTEÚDO EXTRAÍDO:');
+        lines.push(f.content);
+      }
+      lines.push('');
+    });
+  }
+
   lines.push(`\n${'─'.repeat(50)}`);
   lines.push('FIM DA BASE DE CONHECIMENTO — COPY-FORGE SQUAD');
   lines.push(`${'─'.repeat(50)}`);
@@ -1153,6 +1216,113 @@ function downloadKB(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=`copy-forge-kb-${new Date().toISOString().slice(0,10)}.txt`;
   a.click();URL.revokeObjectURL(a.href);
+}
+
+/* FILE ATTACHMENTS */
+if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const attachedFiles=[];
+
+const zone=document.getElementById('upload-zone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag')});
+zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');handleFiles(e.dataTransfer.files)});
+
+function handleFiles(files){
+  Array.from(files).forEach(f=>{
+    if(attachedFiles.find(a=>a.name===f.name&&a.size===f.size))return;
+    const entry={id:Date.now()+Math.random(),name:f.name,size:f.size,type:f.type,content:'',status:'loading'};
+    attachedFiles.push(entry);
+    renderFiles();
+    readFile(f,entry);
+  });
+}
+
+function fmtSize(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB'}
+
+function fileIcon(name){
+  const ext=name.split('.').pop().toLowerCase();
+  if(['pdf'].includes(ext))return '📄';
+  if(['txt','md','rtf'].includes(ext))return '📝';
+  if(['csv','json'].includes(ext))return '📊';
+  if(['doc','docx'].includes(ext))return '📃';
+  return '📎';
+}
+
+async function readFile(file,entry){
+  const ext=file.name.split('.').pop().toLowerCase();
+  try{
+    if(ext==='pdf'){
+      await readPDF(file,entry);
+    }else if(['txt','md','csv','json','rtf'].includes(ext)){
+      const text=await file.text();
+      entry.content=text.trim();
+      entry.status='ok';
+    }else if(['doc','docx'].includes(ext)){
+      entry.content='[Arquivo Word — conteúdo não extraível no navegador. Copie e cole o texto manualmente no campo "Informações adicionais" da Seção 10.]';
+      entry.status='warn';
+    }else{
+      entry.content='[Tipo de arquivo não suportado para extração de texto]';
+      entry.status='warn';
+    }
+  }catch(e){
+    entry.content='Erro ao ler o arquivo: '+e.message;
+    entry.status='err';
+  }
+  renderFiles();
+}
+
+async function readPDF(file,entry){
+  if(!window.pdfjsLib){entry.content='[PDF.js não carregado — recarregue a página]';entry.status='err';return}
+  const ab=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+  let fullText='';
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    const pageText=tc.items.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim();
+    if(pageText)fullText+=`[Página ${p}]\n${pageText}\n\n`;
+  }
+  entry.content=fullText.trim()||'[PDF sem texto extraível — pode ser uma imagem escaneada]';
+  entry.status=fullText.trim()?'ok':'warn';
+}
+
+function removeFile(id){
+  const idx=attachedFiles.findIndex(f=>f.id===id);
+  if(idx>-1)attachedFiles.splice(idx,1);
+  renderFiles();
+}
+
+function toggleExpand(id){
+  const prev=document.querySelector(`.fi-preview[data-id="${id}"]`);
+  const btn=document.querySelector(`.fi-expand[data-id="${id}"]`);
+  if(!prev)return;
+  prev.classList.toggle('expanded');
+  btn.textContent=prev.classList.contains('expanded')?'VER MENOS ▲':'VER MAIS ▼';
+}
+
+function renderFiles(){
+  const list=document.getElementById('file-list');
+  list.innerHTML='';
+  attachedFiles.forEach(f=>{
+    const preview=f.content?(f.content.length>300?f.content.slice(0,300)+'…':f.content):'Lendo...';
+    const statusMap={ok:'✓ TEXTO EXTRAÍDO',warn:'⚠ ATENÇÃO',err:'✗ ERRO',loading:'⟳ PROCESSANDO'};
+    const item=document.createElement('div');item.className='file-item';
+    item.innerHTML=`
+      <div class="fi-icon">${fileIcon(f.name)}</div>
+      <div class="fi-body">
+        <div class="fi-name">${f.name}</div>
+        <div class="fi-meta">${fmtSize(f.size)}</div>
+        <div class="fi-status ${f.status}">${statusMap[f.status]||''}</div>
+        ${f.content?`<div class="fi-preview" data-id="${f.id}">${preview.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>`:''}
+        <div class="fi-actions">
+          ${f.content&&f.content.length>300?`<button class="fi-expand" data-id="${f.id}" onclick="toggleExpand('${f.id}')">VER MAIS ▼</button>`:''}
+          <button class="fi-remove" onclick="removeFile('${f.id}')">REMOVER ×</button>
+        </div>
+      </div>`;
+    list.appendChild(item);
+  });
+  updateProgress();
 }
 
 /* AUTO-SAVE to localStorage */
